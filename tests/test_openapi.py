@@ -30,6 +30,8 @@ async def test_openapi_schema_describes_actual_endpoints(client: AsyncClient) ->
         "/api/v1/identifications/upload",
         "/api/v1/identifications/{identification_id}/verify",
         "/api/v1/verified-bills/{identification_id}",
+        # Phase 8: local-GenAI bill explanation (protected, verified bills only).
+        "/api/v1/verified-bills/{identification_id}/explanation",
         # Phase 4: patient help requests and staff (support-worker) queue.
         "/api/v1/help-requests",
         "/api/v1/help-requests/{ticket_id}",
@@ -48,7 +50,7 @@ async def test_openapi_schema_describes_actual_endpoints(client: AsyncClient) ->
         schema["paths"]["/api/v1/identifications/upload"]["post"]["operationId"]
         == "identify_bill_from_image"
     )
-    assert {"Health", "Sessions", "Identification", "Verification"} <= {
+    assert {"Health", "Sessions", "Identification", "Verification", "Explanations"} <= {
         tag["name"] for tag in schema["tags"]
     }
 

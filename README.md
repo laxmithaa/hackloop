@@ -1,4 +1,4 @@
-# Healthcare Bill Navigator — Backend (Phase 1 + Phase 2 + Phase 3)
+# Healthcare Bill Navigator — Backend (Phases 1–4, 6, 8)
 
 FastAPI foundation for a service that helps patients and caregivers understand
 hospital bills and reach human support workers.
@@ -319,6 +319,85 @@ prototype honestly:
 fictional by design (see `.env.example`); the state and privacy model
 (in-memory per-process) has neither the durability, the isolation nor the
 audit trail a real clinical or billing system requires.
+
+## Local GenAI bill explanation (Phase 8)
+
+The first GenAI feature: a plain-language, multilingual explanation of a
+**successfully verified** bill, produced by a locally running Ollama model —
+never by a cloud AI service.
+
+**What it is.** `POST /api/v1/verified-bills/{identification_id}/explanation`
+returns model prose plus the authoritative bill facts side by side. Supported
+languages: English (`en`), Hindi (`hi`), Kannada (`kn`).
+
+**Hard rules enforced by the backend (not just the prompt).**
+
+- Authorization reuses the Phase 3 guards exactly: live session with granted
+  consent (`X-Session-ID` header), and proof that *this session* verified
+  *this identification*. Explicit per-request AI-processing consent
+  (`"ai_consent": true`) is required; anything else is a 422 before any
+  generation happens.
+- The model receives only a whitelisted summary (bill number, hospital name,
+  bill date, the two recorded amounts, comparison status/message). No patient
+  identity, no access codes, no session secrets, no client-supplied values.
+- Client-supplied amounts/dates/comparisons in the request body are ignored —
+  the record is the single authority.
+- Generated prose is validated before it is returned: invented amounts or
+  dates that contradict the record, and claims about fraud/overcharging,
+  payment status ("has been paid"), insurance approval or deadlines cause the
+  whole completion to be discarded. The endpoint then answers with
+  deterministic fallback text in the requested language.
+- When the model is unavailable (not running, timeout, malformed/empty/output
+  too large), the response is still a 200 with `source: "fallback"` and a
+  `fallback_reason` — the feature degrades, it never breaks and never
+  overrules the record.
+- No prompts, bill contents, codes or generated output are logged; errors
+  never leak model or stack internals.
+
+**Trusted vs generated.** The `facts` field (amounts marked
+`authoritative: true`, bill date, comparison summary) always reflects the
+verified record and is the only part a client may rely on. The `explanation`
+field is prose and explicitly non-authoritative; responses are not medical,
+financial or legal advice.
+
+**Setup (local model only).**
+
+```powershell
+# 1) Install Ollama (https://ollama.com), then pull the model once:
+ollama pull qwen3:1.7b
+# 2) Ensure the server is on http://localhost:11434 (default; no key needed).
+# 3) Optionally adjust HBN_OLLAMA_* in .env (see .env.example).
+```
+
+**Exercise it.**
+
+```powershell
+# start (with demo access codes exported, e.g. HBN_BILL_ACCESS_CODE_SUN2026004512=DEMO1234)
+.\.venv\Scripts\Activate.ps1
+uvicorn app.main:app --reload
+
+# then, from a consented session that verified its bill:
+curl.exe -X POST http://127.0.0.1:8000/api/v1/verified-bills/<identification_id>/explanation `
+  -H "X-Session-ID: <session_id>" -H "Content-Type: application/json" `
+  -d '{\"language\": \"kn\", \"ai_consent\": true}'
+```
+
+**Configuration.**
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `HBN_OLLAMA_BASE_URL` | `http://localhost:11434` | Local Ollama server (http/https only; no queries) |
+| `HBN_OLLAMA_MODEL` | `qwen3:1.7b` | Locally pulled model tag |
+| `HBN_OLLAMA_TIMEOUT_SECONDS` | `60` | Per-request timeout (5–600); slow/absent model → fallback |
+| `HBN_OLLAMA_MAX_OUTPUT_CHARS` | `2000` | Output ceiling; longer completions are discarded, not truncated |
+
+**Limitations.** Local-only single model, no chat history, no streaming, no
+voice; requests without a reachable model silently lose the "generated"
+quality but never invent facts; `think: false` is sent for qwen3-style
+thinking models and older Ollama builds simply ignore it. This feature does
+not change the Phase 6 deployment blockers (in-memory, single process, no
+real patient records).
+
 
 ## Tests
 

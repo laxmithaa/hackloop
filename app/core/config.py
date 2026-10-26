@@ -161,6 +161,25 @@ class Settings(BaseSettings):
     #: PBKDF2 work factor for hashing the low-entropy fictional access codes.
     access_code_pbkdf2_iterations: int = Field(default=60_000, ge=1_000, le=1_000_000)
 
+    # --- Phase 8: local GenAI bill explanation (Ollama, localhost only) ---
+
+    #: Base URL of the local Ollama server. The explanation feature never
+    #: talks to a cloud AI provider; the default keeps everything on the
+    #: developer's own machine at the standard Ollama endpoint.
+    ollama_base_url: str = "http://localhost:11434"
+
+    #: Local model pulled with ``ollama pull`` (non-generative OCR stays
+    #: Tesseract; this powers only the optional explanation layer).
+    ollama_model: str = "qwen3:1.7b"
+
+    #: Per-request timeout for the local model call. A slow/absent model never
+    #: blocks the endpoint for long: responses degrade to deterministic text.
+    ollama_timeout_seconds: float = Field(default=60.0, ge=5, le=600)
+
+    #: Hard character ceiling for one generated explanation. Longer completions
+    #: are discarded (never truncated silently) in favour of the fallback.
+    ollama_max_output_chars: int = Field(default=2000, ge=200, le=8000)
+
     # --- Phase 4: staff support workflow ---
 
     #: Support-worker bearer token for the /api/v1/staff endpoints. Read from
@@ -227,6 +246,25 @@ class Settings(BaseSettings):
         if not version:
             raise ValueError("HBN_CONSENT_POLICY_VERSION must be a non-empty policy version.")
         return version
+
+    @field_validator("ollama_base_url")
+    @classmethod
+    def _validate_ollama_base_url(cls, value: str) -> str:
+        base = value.strip().rstrip("/")
+        if not base:
+            raise ValueError("HBN_OLLAMA_BASE_URL must be a non-empty URL.")
+        parts = urlsplit(base)
+        if parts.scheme not in {"http", "https"} or not parts.netloc:
+            raise ValueError(
+                f"Invalid HBN_OLLAMA_BASE_URL {base!r}. "
+                "Expected 'http://host[:port]' (the local Ollama server)."
+            )
+        if parts.query or parts.fragment:
+            raise ValueError(
+                f"Invalid HBN_OLLAMA_BASE_URL {base!r}. Query strings and "
+                "fragments are not allowed."
+            )
+        return base
 
     @model_validator(mode="after")
     def _reject_wildcard_with_credentials(self) -> Settings:
