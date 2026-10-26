@@ -1,0 +1,21 @@
+# Healthcare Bill Navigator - backend dependencies
+# Python 3.11+ (installed and verified on CPython 3.13).
+# Versions are pinned so local, CI and deployed environments resolve identically.
+
+# --- Runtime ---
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+pydantic==2.14.1
+pydantic-settings==2.16.1
+python-dotenv==1.2.4
+
+# --- Phase 2: uploads and local OCR ---
+pillow==13.0.0
+pytesseract==0.3.13
+python-multipart==0.0.32
+
+# --- Tests and linting ---
+pytest==9.1.1
+pytest-asyncio==1.4.0
+httpx==0.28.1
+ruff==0.17.2
