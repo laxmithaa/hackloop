@@ -1,4 +1,4 @@
-# Healthcare Bill Navigator — Backend (Phases 1–4, 6, 8–9)
+# Healthcare Bill Navigator — Backend (Phases 1–4, 6, 8)
 
 FastAPI foundation for a service that helps patients and caregivers understand
 hospital bills and reach human support workers.
@@ -29,9 +29,8 @@ ids, consistent JSON errors, CORS, versioned routing and health reporting.
   amounts stay server-side for a later verification phase.
 
 Access-code verification, amount comparison and support workflows from
-Phases 3–4 are implemented, as are the local-GenAI explanation (Phase 8) and
-the grounded Q&A, personalised-explanation and caregiver-summary layers
-(Phase 9). No phase after Phase 9 has started.
+Phases 3–4 are implemented; multilingual explanations and caregiver summaries
+remain for later phases.
 
 **Phase 3** adds the secure verification layer on the existing flow:
 
@@ -167,7 +166,7 @@ hackloop2/
 │   │   └── v1/…              # /api/v1 router (add later phase routers here)
 │   ├── core/                 # config, logging, request-id middleware, AppError
 │   └── schemas/              # Pydantic request/response models
-└── tests/                    # pytest + httpx suite (445 tests)
+└── tests/                    # pytest + httpx suite (111 tests)
 ```
 
 Phase 2 modules: `app/services/` (session_store, records, ocr,
@@ -177,13 +176,6 @@ their schemas in `app/schemas/`. The fictional hospital registry is owned by
 `app/services/records.py` behind the `BillRecordAccess` interface, so the
 identification logic never talks to storage directly and later phases can swap
 in a real persistence layer.
-
-Phase 8–9 GenAI modules: `app/services/ollama_client.py` (transport only — no
-business rules), `bill_facts.py` (the single trusted-facts builder),
-`ai_validation.py` (the shared output validator), `bill_glossary.py` (approved
-multilingual definitions), `explanations.py`, `bill_qa.py`,
-`personalization.py` and `caregiver.py` (share store + summary), with routes in
-`app/api/v1/routes/{explanations,questions,personalization,caregiver}.py`.
 
 ## OCR installation (installed and verified on this machine, 2026-10-25)
 
@@ -237,12 +229,6 @@ credential-wildcard combination) abort startup with a clear error.
 | `HBN_VERIFICATION_MAX_ATTEMPTS` | `3` | Failed access-code attempts per challenge before it locks |
 | `HBN_ACCESS_CODE_PBKDF2_ITERATIONS` | `60000` | PBKDF2 work factor for hashing access-code digests |
 | `HBN_BILL_ACCESS_CODE_<BILL#>` | *(unset)* | Local-demo access code for one fictional bill (see below) |
-| `HBN_AI_QUESTIONS_PER_SESSION` | `10` | Follow-up questions one session may ask (backend-enforced) |
-| `HBN_AI_QUESTION_MAX_CHARS` | `500` | Character ceiling for one follow-up question |
-| `HBN_AI_ANSWER_MAX_CHARS` | `800` | Generated Q&A answer ceiling (longer output is rejected) |
-| `HBN_PERSONALIZED_MAX_CHARS` | `900` | Personalised-explanation ceiling (`short` mode uses half) |
-| `HBN_CAREGIVER_SUMMARY_MAX_CHARS` | `900` | Caregiver summary rewrite ceiling |
-| `HBN_CAREGIVER_SHARE_TTL_MINUTES` | `60` | Lifetime of a caregiver share code |
 
 Note: `HBN_ENVIRONMENT` etc. can come from either real environment variables or
 the `.env` file; real environment variables win.
@@ -412,222 +398,17 @@ thinking models and older Ollama builds simply ignore it. This feature does
 not change the Phase 6 deployment blockers (in-memory, single process, no
 real patient records).
 
-## Grounded Q&A, personalised explanations and caregiver summaries (Phase 9)
-
-Three layers built on the Phase 8 foundation: the same local Ollama model,
-the same authorization chain, the same trusted-facts builder and output
-validator, and deterministic fallbacks in every language. **No cloud AI
-provider, no database, no file persistence.** All Phase 9 state is in process
-memory and is lost on restart.
-
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `POST` | `/api/v1/verified-bills/{identification_id}/questions` | Ask one follow-up question |
-| `POST` | `/api/v1/verified-bills/{identification_id}/personalized-explanation` | `simple` / `short` rewrite or approved `term` definition |
-| `POST` | `/api/v1/verified-bills/{identification_id}/caregiver-share` | Mint a caregiver share (patient only) |
-| `GET` | `/api/v1/verified-bills/{identification_id}/caregiver-summary` | Caregiver summary with a share code |
-| `DELETE` | `/api/v1/verified-bills/{identification_id}/caregiver-share` | Revoke every share for this bill |
-
-Every endpoint requires the real Phase 3 authorization chain (`X-Session-ID`,
-granted consent, this session verified this identification). Requests carry
-**no financial input at all**: the only accepted fields are the question or
-presentation options, a language and explicit consent. Unknown body fields are
-rejected (`extra="forbid"`), so a client cannot smuggle an amount or a record
-into the prompt.
-
-### Grounded Q&A
-
-`POST …/questions` with
-
-```json
-{"question": "What is the total amount on my bill?", "language": "en", "ai_consent": true}
-```
-
-returns an answer plus full provenance:
-
-```json
-{
-  "identification_id": "…",
-  "language": "en",
-  "question_intent": "total_amount",
-  "status": "answered",
-  "source": "generated",
-  "answer": "The total amount on the bill is Rs 12480.00. …",
-  "fallback_reason": null,
-  "questions_remaining": 9,
-  "generated_at": "2026-10-27T13:58:58Z"
-}
-```
-
-- **Classification happens before generation.** Medical, legal, payment-decision,
-  charge-correctness, other-patient and prompt-injection requests are refused
-  with fixed text (`source: "policy"`, `status: "refused"`) and never reach the
-  model. Off-topic questions get a scope response pointing at human support.
-- **Figures absent from the record are never estimated.** Insurance share,
-  amount already paid, outstanding balance and due date are answered with a
-  fixed "this record does not include…" text (`source: "record"`).
-- **Term questions** use the approved glossary (`source: "glossary"`); the
-  model is not asked to define terms.
-- **Answerable questions** go to the model; its prose is validated against the
-  record before it is returned, otherwise the deterministic answer for that
-  question type is used (`source: "fallback"`, `fallback_reason` names the
-  check that failed or the transport error).
-- **Rate limiting is server-side**: `HBN_AI_QUESTIONS_PER_SESSION` questions per
-  session (default 10, refusals count too), answered `429
-  ai_question_limit_reached` afterwards. `questions_remaining` reports the
-  budget. The question text is never logged.
-
-### Personalised explanations
-
-`POST …/personalized-explanation` with `mode` = `simple`, `short` or `term`.
-
-- `simple`/`short` rewrite a **deterministic, record-derived explanation**. The
-  model never sees client-supplied prose; its rewrite must preserve every
-  amount/date and is rejected if it invents one or makes a payment/correctness
-  claim. Fallback text restates both the total and the patient share so the two
-  can never be merged.
-- `term` returns a previewed glossary definition (English/Hindi/Kannada) for
-  `total_bill_amount`, `insurance_covered_amount`, `amount_already_paid`,
-  `patient_payable`, `outstanding_balance`, `bill_verification`,
-  `amount_discrepancy` or `co_payment`. Definitions are never generated at
-  runtime; terms whose figure is not in the record say so explicitly.
-- The response always carries the authoritative `facts` block alongside the
-  non-authoritative prose.
-
-### Caregiver summaries
-
-1. The patient's own session, with granted consent and a verified bill, calls
-   `POST …/caregiver-share` with `{"language": "en", "consent_caregiver_sharing": true}`
-   and receives a `share_code` **once** (only its SHA-256 digest is stored).
-2. The caregiver calls `GET …/caregiver-summary` with
-   `X-Caregiver-Share-Code: <code>` and an optional `language`.
-3. The response is a short "What you need to know" summary plus `facts`, the
-   share's `expires_at` and `verification_status`.
-
-Hard rules:
-
-- A bill identifier alone **never** authorizes anything; a live share code is
-  required, and every request additionally re-checks the patient's session,
-  consent and verification. Withdrawn consent revokes every share immediately;
-  sessions that are unknown/expired, expired shares and revoked shares all
-  answer the same `403 caregiver_share_invalid` (no information leakage).
-- The summary exposes only `hospital_name`, `bill_number`, `bill_date`, the two
-  recorded amounts, verification status and the comparison outcome. OCR-derived
-  uploaded amounts are stripped even when they exist.
-- Missing figures stay "not recorded"; the summary never replaces them with
-  zero, never says a charge is correct/incorrect and never advises paying.
-- Shares are limited (3 active per bill, 10 per session), expire after
-  `HBN_CAREGIVER_SHARE_TTL_MINUTES` (default 60) and can be revoked with
-  `DELETE …/caregiver-share` or by withdrawing consent.
-
-### Shared grounding and validation
-
-Every layer follows the same sequence: authorization/consent → trusted facts
-from backend services → minimal structured prompt → bounded local-model call →
-format/length check → monetary and date check → unsupported-claim/scope check →
-deterministic fallback when anything fails → explicit `source` in the response.
-
-The validator (`app/services/ai_validation.py`) accepts currency-marked amounts
-(`Rs`, `₹`, `INR`), bare two-decimal figures and Indian-grouped numbers,
-normalises Devanagari/Kannada digits, masks dates before reading amounts, and
-rejects any value that does not equal a recorded amount. It also rejects
-invented dates, claims about payment/coverage/wrongdoing/deadlines, output over
-the configured ceiling, and Hindi/Kannada text written in the wrong script.
-Passing these checks does not prove an answer is on-topic, which is why
-questions are classified first and refusals never reach the model.
-
-Success responses from the Phase 9 endpoints send `Cache-Control: no-store`.
-Conversation state is limited to a per-session question counter: **no
-transcripts, no share codes and no summaries are logged**.
-
-### Exercise it (PowerShell)
-
-```powershell
-$base = "http://127.0.0.1:8000"
-$session = Invoke-RestMethod -Method Post "$base/api/v1/sessions"
-$sid = $session.session_id
-Invoke-RestMethod -Method Post "$base/api/v1/sessions/$sid/consent" -ContentType "application/json" `
-  -Body (@{decision="granted"; policy_version="patient-consent-2026-10-v1"} | ConvertTo-Json)
-$ident = Invoke-RestMethod -Method Post "$base/api/v1/identifications" -ContentType "application/json" `
-  -Body (@{session_id=$sid; bill_number="SUN-2026-004512"} | ConvertTo-Json)
-$id = $ident.identification_id
-Invoke-RestMethod -Method Post "$base/api/v1/identifications/$id/verify" -ContentType "application/json" `
-  -Body (@{session_id=$sid; access_code="DEMO1234"} | ConvertTo-Json)
-
-# Grounded Q&A (expect status=answered, source=generated or fallback)
-$answer = Invoke-RestMethod -Method Post "$base/api/v1/verified-bills/$id/questions" `
-  -Headers @{ "X-Session-ID" = $sid } -ContentType "application/json" `
-  -Body (@{question="What is the total amount on my bill?"; language="en"; ai_consent=$true} | ConvertTo-Json)
-$answer | Select-Object question_intent, status, source, answer, questions_remaining
-
-# Refusal (expect status=refused, source=policy, no model latency)
-Invoke-RestMethod -Method Post "$base/api/v1/verified-bills/$id/questions" `
-  -Headers @{ "X-Session-ID" = $sid } -ContentType "application/json" `
-  -Body (@{question="Should I pay this bill?"; language="en"; ai_consent=$true} | ConvertTo-Json) `
-  | Select-Object status, source, question_intent, answer
-
-# Hindi question: send the JSON body as UTF-8 bytes (Windows PowerShell 5.1)
-$body = @{question="मेरे बिल में कुल राशि कितनी है?"; language="hi"; ai_consent=$true} | ConvertTo-Json
-Invoke-RestMethod -Method Post "$base/api/v1/verified-bills/$id/questions" `
-  -Headers @{ "X-Session-ID" = $sid } -ContentType "application/json; charset=utf-8" `
-  -Body ([System.Text.Encoding]::UTF8.GetBytes($body)) `
-  | Select-Object source, answer
-
-# Personalised explanation (mode=term returns instantly, no model call)
-Invoke-RestMethod -Method Post "$base/api/v1/verified-bills/$id/personalized-explanation" `
-  -Headers @{ "X-Session-ID" = $sid } -ContentType "application/json" `
-  -Body (@{mode="term"; term="outstanding_balance"; language="en"; ai_consent=$true} | ConvertTo-Json) `
-  | Select-Object source, term, explanation
-
-# Caregiver share + summary
-$share = Invoke-RestMethod -Method Post "$base/api/v1/verified-bills/$id/caregiver-share" `
-  -Headers @{ "X-Session-ID" = $sid } -ContentType "application/json" `
-  -Body (@{language="en"; consent_caregiver_sharing=$true} | ConvertTo-Json)
-$summary = Invoke-RestMethod "$base/api/v1/verified-bills/$id/caregiver-summary" `
-  -Headers @{ "X-Caregiver-Share-Code" = $share.share_code }
-$summary | Select-Object source, verification_status, summary
-
-# Revocation: the next summary call answers 403 caregiver_share_invalid
-Invoke-RestMethod -Method Delete "$base/api/v1/verified-bills/$id/caregiver-share" -Headers @{ "X-Session-ID" = $sid }
-```
-
-If Ollama is not running, every generated answer degrades to deterministic text
-(`source: "fallback"`) while the refusals, glossary definitions and
-"not recorded" answers behave identically.
-
-### Limitations (honest list)
-
-- **No caregiver accounts.** Authorization is possession of a live, expiring
-  share code plus the patient's still-granted consent; there is no caregiver
-  identity, password or staff role, and adding one is a later phase.
-- **Single process.** Question counters and shares live in memory; restarting
-  the server clears them, and multiple workers would each have their own state.
-- Expired shares are pruned lazily (on create/authorize/count), not by a
-  background sweeper.
-- A bare integer without grouping or decimals (`9999`) is not parsed as money by
-  the validator; currency-marked, Indian-grouped and two-decimal figures are.
-- No streaming, no voice input, no conversation transcript; on a CPU-only
-  laptop one generated answer takes roughly 5–30 seconds with `qwen3:1.7b`.
-- Caregiver summaries are short by design; a model rewrite may keep the
-  template's line structure, and the deterministic template is used whenever
-  the rewrite fails validation.
-- **Never use real patient records with this prototype.**
 
 ## Tests
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
-python -m pytest -v          # 445 passed (Phase 9 adds 147)
+python -m pytest -v          # 206 passed; 30 cover the Phase 4 support workflow
 ruff check .                 # lint
 ruff format --check .        # formatting
-python -m compileall -q app tests
+ruff check .                 # lint
+ruff format --check .        # formatting
 ```
-
-`ruff check .` is clean. `ruff format --check .` reports pre-existing
-formatting drift in 13 files that Phase 9 did not touch (the pinned Ruff
-0.17.2 formatter wants to collapse short multi-line signatures written in an
-earlier phase); every Phase 9 file is format-clean. This note exists because
-the drift is unrelated to this phase and was deliberately not rewritten.
 
 The Phase 1 suite covers application startup and lifespan, health response
 structure, request-id sanitisation, the JSON error envelope (404/405/400/422/500),
@@ -666,19 +447,3 @@ deterministic summary, absence of monetary values in patient/staff payloads,
 reason-free logs and an OpenAPI schema without any token. All Phase 4 tests
 run over the in-process ASGI client; no test performs a network call or an
 external messaging/callback action.
-
-The Phase 9 suite (147 tests: `tests/test_ai_validation.py`,
-`tests/test_bill_qa.py`, `tests/test_personalization.py`,
-`tests/test_caregiver_summary.py`) covers the shared validator (currency
-formats, Indian grouping, Devanagari/Kannada digits, date masking, invented
-amounts/dates, claim phrases, length and script checks), question
-classification and every refusal category, prompt injection, missing record
-fields, glossary answers, English/Hindi/Kannada generation, fallbacks for
-timeouts/connection errors/empty/oversized/invalid output, the real
-verification-and-consent authorization chain (unverified, foreign session,
-withdrawn consent, expired session, missing headers/consent), the
-server-enforced question limit, caregiver share creation limits, share-code
-scope/expiry/revocation, patient-session invalidation, restricted summary
-fields (`uploaded_amounts` stripped), and log privacy. Every model call is
-mocked with `httpx.MockTransport`; the suite needs no Ollama server and no
-network. Phase 8's 56 explanation tests still pass unchanged.

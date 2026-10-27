@@ -9,13 +9,10 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from app.api.v1.routes import (
-    caregiver,
     explanations,
     health,
     help,
     identifications,
-    personalization,
-    questions,
     sessions,
     verification,
 )
@@ -28,7 +25,3 @@ api_v1_router.include_router(verification.router)
 api_v1_router.include_router(help.router)
 api_v1_router.include_router(help.staff_router)
 api_v1_router.include_router(explanations.router)
-api_v1_router.include_router(personalization.router)
-# Phase 9: grounded Q&A and caregiver summaries.
-api_v1_router.include_router(questions.router)
-api_v1_router.include_router(caregiver.router)

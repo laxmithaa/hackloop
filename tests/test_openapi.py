@@ -32,11 +32,6 @@ async def test_openapi_schema_describes_actual_endpoints(client: AsyncClient) ->
         "/api/v1/verified-bills/{identification_id}",
         # Phase 8: local-GenAI bill explanation (protected, verified bills only).
         "/api/v1/verified-bills/{identification_id}/explanation",
-        # Phase 9: grounded Q&A, personalised explanations and caregiver sharing.
-        "/api/v1/verified-bills/{identification_id}/questions",
-        "/api/v1/verified-bills/{identification_id}/personalized-explanation",
-        "/api/v1/verified-bills/{identification_id}/caregiver-share",
-        "/api/v1/verified-bills/{identification_id}/caregiver-summary",
         # Phase 4: patient help requests and staff (support-worker) queue.
         "/api/v1/help-requests",
         "/api/v1/help-requests/{ticket_id}",
@@ -55,15 +50,9 @@ async def test_openapi_schema_describes_actual_endpoints(client: AsyncClient) ->
         schema["paths"]["/api/v1/identifications/upload"]["post"]["operationId"]
         == "identify_bill_from_image"
     )
-    assert {
-        "Health",
-        "Sessions",
-        "Identification",
-        "Verification",
-        "Explanations",
-        "Bill Assistant",
-        "Caregiver",
-    } <= {tag["name"] for tag in schema["tags"]}
+    assert {"Health", "Sessions", "Identification", "Verification", "Explanations"} <= {
+        tag["name"] for tag in schema["tags"]
+    }
 
 
 async def test_openapi_schema_documents_response_and_error_models(client: AsyncClient) -> None:

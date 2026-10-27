@@ -180,30 +180,6 @@ class Settings(BaseSettings):
     #: are discarded (never truncated silently) in favour of the fallback.
     ollama_max_output_chars: int = Field(default=2000, ge=200, le=8000)
 
-    # --- Phase 9: grounded Q&A, personalised explanations, caregiver summaries ---
-    # All conversation/rate-limit/caregiver state stays in process memory.
-
-    #: Character ceiling for one follow-up question (also bounded by the
-    #: request schema, so this only ever tightens the limit).
-    ai_question_max_chars: int = Field(default=500, ge=20, le=1000)
-
-    #: Follow-up questions one patient session may ask in total. Enforced by
-    #: the backend on every request; clients cannot raise it.
-    ai_questions_per_session: int = Field(default=10, ge=1, le=100)
-
-    #: Character ceiling for one generated Q&A answer.
-    ai_answer_max_chars: int = Field(default=800, ge=200, le=2000)
-
-    #: Character ceiling for a personalised explanation ("short" mode uses
-    #: half of this budget).
-    personalized_max_chars: int = Field(default=900, ge=200, le=2000)
-
-    #: Character ceiling for a caregiver summary rewrite.
-    caregiver_summary_max_chars: int = Field(default=900, ge=200, le=2000)
-
-    #: Lifetime of one caregiver share code. Must be re-minted afterwards.
-    caregiver_share_ttl_minutes: int = Field(default=60, ge=5, le=1440)
-
     # --- Phase 4: staff support workflow ---
 
     #: Support-worker bearer token for the /api/v1/staff endpoints. Read from

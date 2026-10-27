@@ -228,39 +228,3 @@ class SupportStaffAuthError(AppError):
     status_code = 401
     code = "support_staff_unauthorized"
     default_message = "Support-worker authentication is required."
-
-
-# --- Phase 9 domain errors ---------------------------------------------------
-
-
-class QuestionTooLongError(BadRequestError):
-    """The follow-up question exceeds the configured character ceiling."""
-
-    status_code = 422
-    code = "question_too_long"
-    default_message = "The question is longer than the allowed limit."
-
-
-class AiQuestionLimitError(AppError):
-    """The session has used all of its follow-up questions for this bill."""
-
-    status_code = 429
-    code = "ai_question_limit_reached"
-    default_message = (
-        "The question limit for this session has been reached. "
-        "Please start a new session to ask more questions."
-    )
-
-
-class CaregiverShareInvalidError(PermissionDeniedError):
-    """No live caregiver share matches this bill (missing, expired or revoked)."""
-
-    code = "caregiver_share_invalid"
-    default_message = "This caregiver share code is missing, invalid, expired or has been revoked."
-
-
-class CaregiverShareLimitError(ConflictError):
-    """Too many active caregiver shares exist for this bill or session."""
-
-    code = "caregiver_share_limit_reached"
-    default_message = "Too many active caregiver shares exist. Revoke an existing share first."

@@ -92,9 +92,6 @@ class PatientSession:
     identifications: list[IdentificationRecord] = field(default_factory=list)
     challenges: dict[str, VerificationChallenge] = field(default_factory=dict)
     verifications: dict[str, VerificationRecord] = field(default_factory=dict)
-    #: Phase 9: follow-up questions asked through this session. Kept in memory
-    #: only; reset when consent is withdrawn and lost on restart.
-    ai_questions_asked: int = 0
 
     @property
     def consent_recorded(self) -> bool:
@@ -190,25 +187,3 @@ class SessionStore:
 
         with self._lock:
             session.verifications[record.identification_id] = record
-
-    def consume_ai_question(self, session: PatientSession, *, limit: int) -> int | None:
-        """Atomically count one accepted question.
-
-        Returns the number of questions still available after this one, or
-        ``None`` when the session has exhausted its budget (the caller then
-        raises the rate-limit error **before** any generation). The budget is
-        per session and enforced here, in the backend, so a client cannot
-        raise it.
-        """
-
-        with self._lock:
-            if session.ai_questions_asked >= limit:
-                return None
-            session.ai_questions_asked += 1
-            return limit - session.ai_questions_asked
-
-    def reset_ai_state(self, session: PatientSession) -> None:
-        """Drop Phase 9 conversation bookkeeping (consent withdrawn/revoked)."""
-
-        with self._lock:
-            session.ai_questions_asked = 0
