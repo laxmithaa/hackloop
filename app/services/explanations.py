@@ -21,17 +21,27 @@ Supported languages: English (``en``), Hindi (``hi``), Kannada (``kn``).
 from __future__ import annotations
 
 import logging
-import re
-from contextlib import suppress
 from dataclasses import dataclass
-from decimal import Decimal, InvalidOperation
 
+from app.services.ai_validation import (
+    UNSUPPORTED_CLAIM_PHRASES,
+    allowed_amount_values,
+    allowed_date_forms,
+    amount_problems,
+    date_problems,
+    phrase_problems,
+)
 from app.services.amount_comparison import (
     COMPARISON_AMOUNTS_DIFFER,
     COMPARISON_INSUFFICIENT_EVIDENCE,
     COMPARISON_MATCHED,
     COMPARISON_NO_UPLOADED_IMAGE,
-    format_minor_units,
+)
+from app.services.bill_facts import (
+    ExplanationFacts,
+    recorded_amounts,
+    recorded_dates,
+    render_amount,
 )
 from app.services.ollama_client import OllamaChatClient, OllamaChatError
 
@@ -46,53 +56,11 @@ SUPPORTED_EXPLANATION_LANGUAGES: dict[str, str] = {
     "kn": "Kannada",
 }
 
-_MONEY_TOKEN = re.compile(
-    r"(?i)(?:₹|rs\.?|inr)\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)"
-)
-_DATE_TOKEN = re.compile(r"\b(\d{4}-\d{2}-\d{2}|\d{1,2}[/.]\d{1,2}[/.]\d{2,4})\b")
-
 #: Phrases a local explanation may never use: they assert facts the
 #: authoritative record does not establish (payment status, insurance
-#: coverage, wrongdoing) or deadlines that do not exist in the data.
-_FORBIDDEN_PHRASES = (
-    "fraud",
-    "overcharg",
-    "scam",
-    "falsifi",
-    "money launder",
-    "has been paid",
-    "already paid",
-    "paid in full",
-    "payment received",
-    "insurance will cover",
-    "insurance covers",
-    "insurance has approved",
-    "insurance approved",
-    "claim approved",
-    "waiv",
-    "deadline",
-    "due date",
-    "penal",
-    "interest will be charged",
-    "must pay",
-)
-
-
-@dataclass(frozen=True)
-class ExplanationFacts:
-    """The whitelisted, server-owned facts the layer may talk about.
-
-    Everything here is read from backend services (records + verification +,
-    comparison); nothing is supplied by the client.
-    """
-
-    bill_number: str
-    hospital_name: str
-    bill_date: str
-    total_minor_units: int
-    patient_payable_minor_units: int
-    comparison_status: str
-    comparison_message: str
+#: coverage, wrongdoing) or deadlines that do not exist in the data. The
+#: shared list keeps Phase 8 and the Phase 9 layers identical.
+_FORBIDDEN_PHRASES = UNSUPPORTED_CLAIM_PHRASES
 
 
 @dataclass(frozen=True)
@@ -107,17 +75,7 @@ class ExplanationOutcome:
 def _render_amount(minor_units: int) -> str:
     """Trusted amount in the canonical "Rs 12345.00" shape used everywhere."""
 
-    return f"Rs {format_minor_units(minor_units)}"
-
-
-def _iso_to_dotted(iso_date: str) -> str | None:
-    """Render ``2026-03-05`` as ``05.03.2026`` when the shape matches."""
-
-    parts = iso_date.split("-")
-    if len(parts) == 3 and all(part.isdigit() for part in parts):
-        year, month, day = parts
-        return f"{day}.{month}.{year}"
-    return None
+    return render_amount(minor_units)
 
 
 def build_system_prompt() -> str:
@@ -161,42 +119,15 @@ def build_user_prompt(facts: ExplanationFacts, language_code: str) -> str:
 
 
 def validator_problems(text: str, facts: ExplanationFacts) -> list[str]:
-    """Find unsupported financial facts/claims in generated prose."""
+    """Find unsupported financial facts/claims in generated prose.
 
-    problems: list[str] = []
+    Delegates to the shared validator (``app.services.ai_validation``) so the
+    Phase 8 explanation and the Phase 9 layers cannot drift apart.
+    """
 
-    lowered = text.lower()
-    for phrase in _FORBIDDEN_PHRASES:
-        if phrase in lowered:
-            problems.append(f"forbidden_claim:{phrase}")
-
-    allowed_amounts: set[Decimal] = set()
-    for value in (facts.total_minor_units, facts.patient_payable_minor_units):
-        with suppress(InvalidOperation):  # pragma: no cover - ints never fail here
-            allowed_amounts.add(Decimal(value) / 100)
-
-    for match in _MONEY_TOKEN.finditer(text):
-        raw = match.group(1)
-        candidate = raw.replace(",", "")
-        try:
-            amount = Decimal(candidate)
-        except InvalidOperation:  # pragma: no cover - regex already guards
-            problems.append("unsupported_amount:unparsable")
-            continue
-        # Whole and two-decimal forms of the same value are acceptable prose
-        # variance; anything else is an invented amount.
-        if not any(amount == allowed or amount == allowed.quantize(Decimal("0.01"))
-                   for allowed in allowed_amounts):
-            problems.append(f"unsupported_amount:{raw}")
-
-    allowed_dates = {facts.bill_date}
-    dotted = _iso_to_dotted(facts.bill_date)
-    if dotted:
-        allowed_dates.add(dotted)
-    for match in _DATE_TOKEN.finditer(text):
-        if match.group(1) not in allowed_dates:
-            problems.append(f"unsupported_date:{match.group(1)}")
-
+    problems = phrase_problems(text, _FORBIDDEN_PHRASES)
+    problems += amount_problems(text, allowed_amount_values(recorded_amounts(facts)))
+    problems += date_problems(text, allowed_date_forms(recorded_dates(facts)))
     return problems
 
 
