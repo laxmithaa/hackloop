@@ -24,19 +24,10 @@ from fastapi import APIRouter, Header, Request
 
 from app.core.errors import IdentificationNotVerifiableError
 from app.schemas.errors import ErrorResponse
-from app.schemas.explanations import (
-    BillExplanationResponse,
-    ExplanationRequest,
-    TrustedAmountOut,
-    TrustedBillFactsOut,
-)
-from app.schemas.verification import (
-    ComparisonSummary,
-    UploadedAmountOut,
-    validate_session_id_format,
-)
-from app.services.amount_comparison import COMPARISON_NO_UPLOADED_IMAGE, format_minor_units
-from app.services.explanations import ExplanationFacts, ExplanationService
+from app.schemas.explanations import BillExplanationResponse, ExplanationRequest
+from app.schemas.verification import validate_session_id_format
+from app.services.bill_facts import build_trusted_facts
+from app.services.explanations import ExplanationService
 from app.services.verification import VerificationService
 
 logger = logging.getLogger(__name__)
@@ -57,59 +48,6 @@ def _error_docs() -> dict[int | str, dict[str, Any]]:
         422: doc(422, "Request validation failure (unsupported language or missing AI consent)."),
         500: doc(500, "Unexpected server error; internals never leak."),
     }
-
-
-def _build_trusted_facts(
-    service: VerificationService,
-    identification,
-    verification,
-    comparison,
-) -> tuple[TrustedBillFactsOut, ExplanationFacts]:
-    """Authoritative facts for one verified identification, read server-side."""
-
-    bill = service.bill_for_identification(identification)
-
-    uploaded_amounts = None
-    if comparison and comparison.status != COMPARISON_NO_UPLOADED_IMAGE:
-        extracted = identification.extracted or {}
-        uploaded_amounts = [
-            UploadedAmountOut(
-                label=item["label"], value=format_minor_units(int(item["minor_units"]))
-            )
-            for item in extracted.get("labelled_amounts", [])
-            if isinstance(item, dict) and "minor_units" in item
-        ]
-
-    facts_out = TrustedBillFactsOut(
-        bill_number=bill.bill_number,
-        hospital_name=identification.hospital_name or "",
-        bill_date=bill.bill_date,
-        amounts={
-            "total": TrustedAmountOut(
-                label="total",
-                value=format_minor_units(bill.total_amount_cents),
-                authoritative=True,
-            ),
-            "patient_payable": TrustedAmountOut(
-                label="patient_payable",
-                value=format_minor_units(bill.patient_payable_cents),
-                authoritative=True,
-            ),
-        },
-        comparison=(ComparisonSummary(status=comparison.status, message=comparison.message)
-                    if comparison else None),
-        uploaded_amounts=uploaded_amounts,
-    )
-    model_facts = ExplanationFacts(
-        bill_number=bill.bill_number,
-        hospital_name=identification.hospital_name or "",
-        bill_date=bill.bill_date,
-        total_minor_units=bill.total_amount_cents,
-        patient_payable_minor_units=bill.patient_payable_cents,
-        comparison_status=comparison.status if comparison else COMPARISON_NO_UPLOADED_IMAGE,
-        comparison_message=comparison.message if comparison else "",
-    )
-    return facts_out, model_facts
 
 
 @router.post(
@@ -148,9 +86,7 @@ async def explain_verified_bill(
     # Resolve the (single, registered) bill behind the verification; this is
     # also the fail-closed guarantee that facts never come from client input.
     try:
-        facts_out, model_facts = _build_trusted_facts(
-            service, identification, verification, comparison
-        )
+        facts_out, model_facts = build_trusted_facts(service, identification, comparison)
     except IdentificationNotVerifiableError:  # registry entry removed/misconfigured
         raise
 

@@ -141,6 +141,12 @@ async def withdraw_consent(session_id: str, request: Request) -> ConsentResponse
     help_store = request.app.state.help_request_store
     help_store.mark_session_sharing_withdrawn(session_id)
 
+    # Phase 9: caregiver shares are request-scoped grants, never standing
+    # access. Withdrawing consent revokes every share this session minted and
+    # clears the Q&A bookkeeping. In-memory only, like everything else here.
+    request.app.state.caregiver_share_store.revoke_session(session_id)
+    store.reset_ai_state(session)
+
     return ConsentResponse(
         session_id=session.session_id,
         decision=CONSENT_WITHDRAWN,
