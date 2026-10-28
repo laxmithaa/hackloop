@@ -1,0 +1,2063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediExplain AI — Your hospital bill, explained simply.</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%231d4ed8'/><path d='M14 8h4v6h6v4h-6v6h-4v-6H8v-4h6V8z' fill='white'/></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Sans+Kannada:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --primary: #1d4ed8;
+      --primary-hover: #1e40af;
+      --primary-light: #eff6ff;
+      --primary-border: #bfdbfe;
+      --secondary: #0f766e;
+      --secondary-light: #f0fdfa;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-raised: #f1f5f9;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-secondary: #64748b;
+      --text-tertiary: #94a3b8;
+      --warning: #f59e0b;
+      --warning-light: #fffbeb;
+      --error: #dc2626;
+      --error-light: #fef2f2;
+      --success: #16a34a;
+      --success-light: #f0fdf4;
+      --radius-sm: 8px;
+      --radius: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow: 0 4px 16px rgba(0,0,0,0.08);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans Devanagari', 'Noto Sans Kannada', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Clean Lucide Icon System ── */
+    .lucide-icon {
+      display: inline-block;
+      vertical-align: middle;
+      width: 1.15em;
+      height: 1.15em;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      flex-shrink: 0;
+    }
+    .icon-xs { width: 13px; height: 13px; }
+    .icon-sm { width: 16px; height: 16px; }
+    .icon-md { width: 20px; height: 20px; }
+    .icon-lg { width: 24px; height: 24px; }
+    .icon-xl { width: 32px; height: 32px; }
+    .animate-spin {
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── Header ── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit;
+    }
+    .brand-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; color: white;
+      box-shadow: 0 2px 8px rgba(29, 78, 216, 0.25);
+    }
+    .brand-title {
+      font-size: 1.15rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text);
+    }
+    .brand-title span { color: var(--primary); }
+    .brand-tagline {
+      font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;
+    }
+
+    /* Top Nav Mode Switcher */
+    .view-mode-tabs {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--surface-raised); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 3px;
+    }
+    .tab-btn {
+      padding: 6px 14px; border-radius: 8px; border: none;
+      font-family: inherit; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: all 0.18s ease;
+      background: transparent; color: var(--text-secondary);
+    }
+    .tab-btn.active {
+      background: var(--surface); color: var(--primary);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    /* Language Switcher */
+    .lang-switcher {
+      display: inline-flex; align-items: center; gap: 3px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 3px;
+    }
+    .lang-btn {
+      padding: 6px 12px; border-radius: 8px; border: none;
+      font-family: inherit; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: all 0.18s ease;
+      background: transparent; color: var(--text-secondary);
+    }
+    .lang-btn.active {
+      background: var(--primary); color: white;
+      box-shadow: 0 2px 6px rgba(29, 78, 216, 0.28);
+    }
+
+    /* ── Hero ── */
+    .hero-section {
+      max-width: 920px; margin: 0 auto; width: 100%;
+      padding: 3.5rem 1.5rem 2.5rem;
+    }
+    .hero-content {
+      display: flex; flex-direction: column; align-items: center; text-align: center;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px; border-radius: 100px;
+      background: var(--primary-light);
+      border: 1px solid var(--primary-border);
+      color: var(--primary);
+      font-size: 0.8rem; font-weight: 600;
+      margin-bottom: 1.25rem;
+    }
+    .pulse-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--primary); animation: pulse 2s infinite ease-in-out;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .hero-title {
+      font-size: clamp(2.3rem, 4.5vw, 3.4rem);
+      font-weight: 800; color: var(--text);
+      line-height: 1.18; letter-spacing: -0.025em;
+      margin-bottom: 1rem; max-width: 780px;
+    }
+    .hero-sub {
+      font-size: 1.05rem; color: var(--text-secondary);
+      line-height: 1.7; margin-bottom: 2.25rem; max-width: 660px;
+    }
+    .hero-actions {
+      display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 1.75rem;
+    }
+    .btn-main {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 26px; border-radius: var(--radius);
+      background: var(--primary); color: white; border: none;
+      font-size: 0.98rem; font-weight: 700; font-family: inherit;
+      cursor: pointer; text-decoration: none;
+      box-shadow: 0 4px 14px rgba(29, 78, 216, 0.35);
+      transition: all 0.2s ease;
+    }
+    .btn-main:hover {
+      background: var(--primary-hover); transform: translateY(-1px);
+    }
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 22px; border-radius: var(--radius);
+      background: var(--surface); color: var(--text);
+      border: 1px solid var(--border);
+      font-size: 0.95rem; font-weight: 600; font-family: inherit;
+      cursor: pointer; text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .btn-outline:hover { background: var(--surface-raised); }
+    .privacy-box {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px 18px; border-radius: var(--radius-sm);
+      background: var(--surface-raised); border: 1px solid var(--border);
+      font-size: 0.82rem; color: var(--text-secondary); max-width: 580px;
+    }
+
+    /* ── Upload Area ── */
+    .upload-container {
+      max-width: 860px; margin: 0 auto; width: 100%;
+      padding: 1.5rem 1.5rem 3rem;
+    }
+    .box-card {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-lg);
+      padding: 42px 24px; text-align: center; cursor: pointer;
+      background: var(--surface-raised);
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .dropzone:hover, .dropzone.dragover {
+      border-color: var(--primary); background: var(--primary-light);
+    }
+    .dropzone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .dropzone-icon {
+      font-size: 42px; margin-bottom: 12px;
+    }
+
+    /* Image Purge Callout Banner */
+    .image-purge-badge {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px; border-radius: var(--radius-sm);
+      background: #f0fdf4; border: 1px solid #86efac; color: #166534;
+      font-size: 0.8rem; font-weight: 600; margin-top: 12px;
+    }
+
+    /* ── Progress & Loading ── */
+    .loading-card {
+      display: none; background: var(--surface);
+      border-radius: var(--radius-xl); border: 1px solid var(--border);
+      box-shadow: var(--shadow); padding: 3.5rem 2rem;
+      text-align: center; max-width: 600px; margin: 2rem auto;
+    }
+    .spinner {
+      width: 64px; height: 64px; border-radius: 50%;
+      border: 4px solid var(--primary-light);
+      border-top-color: var(--primary);
+      animation: spin 1s linear infinite; margin: 0 auto 1.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-steps {
+      display: flex; flex-direction: column; gap: 10px;
+      max-width: 380px; margin: 1.5rem auto 0; text-align: left;
+    }
+    .l-step {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px; border-radius: var(--radius-sm);
+      background: var(--surface-raised); font-size: 0.85rem; color: var(--text-tertiary);
+    }
+    .l-step.current {
+      background: var(--primary-light); color: var(--primary); font-weight: 700;
+    }
+    .l-step.done {
+      background: var(--success-light); color: var(--text);
+    }
+
+    /* ── Results Section ── */
+    .results-container {
+      display: none; max-width: 960px; margin: 0 auto; width: 100%;
+      padding: 0 1.5rem 3rem;
+    }
+    .banner-badge {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 18px; border-radius: var(--radius);
+      margin-bottom: 1.5rem; font-size: 0.88rem; font-weight: 600;
+    }
+    .banner-badge.demo {
+      background: var(--warning-light); border: 1px solid var(--warning); color: #92400e;
+    }
+    .banner-badge.real {
+      background: var(--success-light); border: 1px solid var(--success); color: var(--success);
+    }
+    .results-head-card {
+      background: var(--surface); border-radius: var(--radius-xl);
+      border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+      padding: 24px 28px; margin-bottom: 1.5rem;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+    }
+    .total-badge {
+      background: var(--primary-light); border: 1px solid var(--primary-border);
+      border-radius: var(--radius); padding: 12px 20px; text-align: right;
+    }
+
+    /* Line item card */
+    .item-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 20px 24px;
+      margin-bottom: 14px; box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease;
+    }
+    .item-card:hover {
+      box-shadow: var(--shadow); transform: translateY(-1px);
+    }
+    .item-header {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 12px; margin-bottom: 10px;
+    }
+    .item-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--primary-light); color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.78rem; font-weight: 700; flex-shrink: 0;
+    }
+    .item-amount {
+      background: var(--primary-light); color: var(--primary);
+      border-radius: var(--radius); padding: 4px 12px;
+      font-size: 0.95rem; font-weight: 700;
+    }
+    .item-explanation {
+      font-size: 0.9rem; color: var(--text-secondary); line-height: 1.65;
+      margin: 0 0 14px 40px;
+    }
+    .btn-listen {
+      margin-left: 40px; display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 16px; border: 1px solid var(--primary); border-radius: var(--radius-sm);
+      background: var(--primary-light); color: var(--primary);
+      font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: all 0.18s ease;
+    }
+    .btn-listen.speaking {
+      border-color: var(--error); background: var(--error-light); color: var(--error);
+    }
+
+    /* ── Support Ticket Card (Consent & Ticket ID) ── */
+    .ticket-request-card {
+      background: var(--surface); border-radius: var(--radius-xl);
+      border: 2px solid var(--primary-border); box-shadow: var(--shadow);
+      padding: 24px 28px; margin-top: 2rem; position: relative;
+    }
+    .consent-label {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 16px; border-radius: var(--radius-sm);
+      background: var(--surface-raised); border: 1px solid var(--border);
+      cursor: pointer; font-size: 0.92rem; font-weight: 600; color: var(--text);
+      user-select: none; margin: 14px 0;
+    }
+    .consent-label input[type="checkbox"] {
+      width: 18px; height: 18px; margin-top: 2px; cursor: pointer; accent-color: var(--primary);
+    }
+    .ticket-issued-receipt {
+      display: none; background: #f0fdf4; border: 2px solid #22c55e;
+      border-radius: var(--radius-lg); padding: 20px 24px; margin-top: 14px;
+    }
+
+    /* ── Chatbox ── */
+    .chatbox-card {
+      background: var(--surface); border-radius: var(--radius-xl);
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+      margin-top: 2rem; overflow: hidden; display: flex; flex-direction: column;
+      height: 520px;
+    }
+    .chat-header {
+      padding: 16px 20px; background: var(--surface-raised);
+      border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px;
+    }
+    .chat-messages {
+      flex: 1; overflow-y: auto; padding: 20px; background: #fafbfc;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .msg-row {
+      display: flex; flex-direction: column; max-width: 85%;
+    }
+    .msg-row.user { align-self: flex-end; align-items: flex-end; }
+    .msg-row.bot { align-self: flex-start; align-items: flex-start; }
+    .msg-bubble {
+      padding: 12px 16px; border-radius: 18px; font-size: 0.9rem; line-height: 1.6;
+    }
+    .msg-row.user .msg-bubble {
+      background: var(--primary); color: white; border-bottom-right-radius: 4px;
+    }
+    .msg-row.bot .msg-bubble {
+      background: var(--surface); color: var(--text); border: 1px solid var(--border);
+      border-bottom-left-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .chat-input-area {
+      padding: 14px 18px; border-top: 1px solid var(--border); background: var(--surface);
+      display: flex; gap: 10px; align-items: flex-end;
+    }
+    .chat-input {
+      flex: 1; padding: 10px 14px; border-radius: var(--radius);
+      border: 1px solid var(--border); background: var(--surface-raised);
+      font-family: inherit; font-size: 0.88rem; outline: none; resize: none; max-height: 100px;
+    }
+    .chat-input:focus {
+      border-color: var(--primary); background: white;
+    }
+    .btn-send {
+      width: 42px; height: 42px; border-radius: var(--radius);
+      background: var(--primary); color: white; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+
+    /* ── Hospital Worker Dashboard ── */
+    .dashboard-container {
+      display: none; max-width: 1080px; margin: 0 auto; width: 100%;
+      padding: 2.5rem 1.5rem 4rem;
+    }
+    .judge-disclosure-box {
+      background: #eff6ff; border: 1.5px solid #3b82f6; border-radius: var(--radius-lg);
+      padding: 18px 22px; margin-bottom: 2rem; color: #1e3a8a;
+    }
+    .viewing-as-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); box-shadow: var(--shadow-sm);
+      padding: 22px 26px; margin-bottom: 2rem;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+    }
+    .staff-select {
+      padding: 10px 16px; border-radius: var(--radius); border: 1.5px solid var(--primary);
+      background: var(--surface); color: var(--text); font-family: inherit; font-size: 0.92rem;
+      font-weight: 600; outline: none; cursor: pointer; min-width: 320px;
+    }
+    .ticket-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 16px;
+      box-shadow: var(--shadow-sm); transition: transform 0.2s ease;
+    }
+    .ticket-card:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+    .ticket-head {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+    .badge-status {
+      display: inline-block; padding: 4px 10px; border-radius: 100px;
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+    }
+    .badge-status.open { background: #fef3c7; color: #92400e; }
+    .badge-status.progress { background: #dbeafe; color: #1e40af; }
+    .badge-status.resolved { background: #dcfce7; color: #166534; }
+
+    /* ── How it works & Footer ── */
+    .how-section {
+      background: var(--surface); border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border); padding: 4rem 1.5rem;
+    }
+    footer {
+      background: var(--surface); border-top: 1px solid var(--border);
+      padding: 2.5rem 1.5rem; margin-top: auto;
+    }
+
+    /* ── Two-Options Grid (Upload Bill vs Enter Bill Number) ── */
+    .two-options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 1.75rem;
+    }
+    .option-card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--primary-border);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justifyContent: space-between;
+      gap: 14px;
+      box-shadow: 0 2px 8px rgba(29, 78, 216, 0.08);
+      transition: all 0.2s ease;
+    }
+    .option-card:hover {
+      box-shadow: 0 4px 14px rgba(29, 78, 216, 0.14);
+      transform: translateY(-2px);
+    }
+    .option-card.low-net {
+      border-color: #86efac;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
+    }
+    .option-card.low-net:hover {
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.14);
+    }
+
+    /* ── Voice Guidance / Listen to All Bar ── */
+    .voice-all-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease;
+    }
+    .voice-all-bar.speaking {
+      background: var(--error-light);
+      border-color: var(--error);
+      box-shadow: 0 0 16px rgba(220, 38, 38, 0.2);
+    }
+    .btn-listen-all {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: var(--radius);
+      background: var(--primary);
+      color: white;
+      border: none;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
+      transition: all 0.2s ease;
+    }
+    .btn-listen-all.speaking {
+      background: var(--error);
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+    }
+
+    /* ── Low-Network Bill Lookup Box ── */
+    .lookup-card {
+      display: none;
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      border: 1.5px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      padding: 2.25rem 2rem;
+      max-width: 680px;
+      margin: 0 auto 2rem;
+    }
+    .lookup-input-wrapper {
+      position: relative;
+      margin: 1.25rem 0 0.5rem;
+    }
+    .lookup-input-wrapper span.icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 20px;
+      pointer-events: none;
+    }
+    .lookup-input {
+      width: 100%;
+      padding: 15px 16px 15px 52px;
+      border-radius: var(--radius);
+      border: 2px solid var(--border);
+      background: var(--surface-raised);
+      color: var(--text);
+      font-family: monospace;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+    .lookup-input:focus {
+      border-color: var(--primary);
+      background: white;
+    }
+    .lookup-input.error {
+      border-color: var(--error);
+    }
+    .lookup-error-badge {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      color: var(--error);
+      font-size: 0.84rem;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    .lookup-notfound-box {
+      display: none;
+      background: var(--error-light);
+      border: 1.5px solid #fca5a5;
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      margin-top: 1.5rem;
+    }
+    .lookup-neterror-box {
+      display: none;
+      background: #fffbeb;
+      border: 1.5px solid #fcd34d;
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .hero-section { padding: 2.5rem 1rem 2rem; }
+      .two-options-grid { grid-template-columns: 1fr; gap: 12px; }
+      .hero-title { font-size: 2rem; }
+      .brand-tagline { display: none; }
+      .staff-select { min-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header>
+    <a href="#" class="brand" onclick="switchViewMode('patient'); return false;">
+      <div class="brand-icon">
+        <svg class="lucide-icon icon-md" viewBox="0 0 24 24" stroke="white" stroke-width="2.5"><path d="M12 6v12m-6-6h12"/></svg>
+      </div>
+      <div>
+        <div class="brand-title">MediExplain <span>AI</span></div>
+        <div class="brand-tagline" id="brandTagline">Your hospital bill, explained simply.</div>
+      </div>
+    </a>
+
+    <!-- Top View Switcher: Patient View vs Hospital Worker Dashboard -->
+    <div class="view-mode-tabs">
+      <button class="tab-btn active" id="tabPatient" onclick="switchViewMode('patient')">
+        <svg class="lucide-icon icon-sm" style="margin-right:6px;" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg><span>Patient Explainer</span>
+      </button>
+      <button class="tab-btn" id="tabWorker" onclick="switchViewMode('worker')">
+        <svg class="lucide-icon icon-sm" style="margin-right:6px;" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg><span>Hospital Worker Dashboard</span>
+      </button>
+    </div>
+
+    <!-- Language Switcher -->
+    <div class="lang-switcher">
+      <svg class="lucide-icon icon-sm" style="color:var(--text-tertiary);margin:0 4px;" viewBox="0 0 24 24"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+      <button class="lang-btn active" onclick="switchLanguage('en', this)">English</button>
+      <button class="lang-btn" onclick="switchLanguage('hi', this)">हिंदी</button>
+      <button class="lang-btn" onclick="switchLanguage('kn', this)">ಕನ್ನಡ</button>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- 1. PATIENT EXPLAINER VIEW -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <main id="patientView">
+    <!-- ── Hero ── -->
+    <section class="hero-section" id="heroArea">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <div class="pulse-dot"></div>
+          <span id="heroBadge">GenAI Powered · Multilingual · Audio Guidance</span>
+        </div>
+
+        <h1 class="hero-title" id="heroTitle">Understand Your Hospital Bill.</h1>
+
+        <p class="hero-sub" id="heroSub">
+          Upload a photo of your hospital bill to understand each charge in simple language. You can also listen to the explanation in your preferred language.
+        </p>
+
+        <!-- ── TWO CLEAR OPTIONS (Side by Side Desktop / Stacked Mobile) ── -->
+        <div class="two-options-grid">
+          <!-- Option 1: Upload Bill -->
+          <div class="option-card" id="optCardUpload">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                <span style="color:var(--primary);display:inline-flex;">
+                  <svg class="lucide-icon icon-lg" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </span>
+                <h3 style="font-size:1.02rem;font-weight:800;margin:0;" id="optUploadTitle">Option 1: Upload Bill</h3>
+              </div>
+              <p style="font-size:0.83rem;color:var(--text-secondary);line-height:1.45;margin-bottom:12px;" id="optUploadDesc">
+                Upload a photo or document of your hospital bill for AI OCR & line-by-line explanation.
+              </p>
+            </div>
+            <button class="btn-main" style="width:100%;justify-content:center;padding:10px 16px;" onclick="selectPatientOption('upload')">
+              <svg class="lucide-icon icon-sm" style="margin-right:6px;" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span id="optUploadBtn">Upload Bill</span>
+            </button>
+          </div>
+
+          <!-- Option 2: Enter Bill Number -->
+          <div class="option-card low-net" id="optCardLookup">
+            <div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="color:#16a34a;display:inline-flex;">
+                    <svg class="lucide-icon icon-lg" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>
+                  </span>
+                  <h3 style="font-size:1.02rem;font-weight:800;margin:0;" id="optLookupTitle">Option 2: Enter Bill Number</h3>
+                </div>
+                <span style="font-size:0.68rem;font-weight:700;background:#f0fdf4;color:#166534;border:1px solid #86efac;padding:2px 7px;border-radius:100px;display:inline-flex;align-items:center;gap:4px;">
+                  <svg class="lucide-icon icon-xs" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></svg> 2G Friendly
+                </span>
+              </div>
+              <p style="font-size:0.83rem;color:var(--text-secondary);line-height:1.45;margin-bottom:12px;" id="optLookupDesc">
+                Having a slow internet connection? Enter your bill number instead.
+              </p>
+            </div>
+            <button class="btn-main" style="width:100%;justify-content:center;padding:10px 16px;background:#16a34a;box-shadow:0 4px 14px rgba(22,163,74,0.3);" onclick="selectPatientOption('lookup')">
+              <svg class="lucide-icon icon-sm" style="margin-right:6px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <span id="optLookupBtn">Enter Bill Number</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:1.5rem;">
+          <a href="#howItWorks" class="btn-outline" style="padding:9px 18px;font-size:0.85rem;" id="heroCtaHow">How It Works</a>
+        </div>
+
+        <div class="privacy-box">
+          <svg class="lucide-icon icon-sm" style="color:var(--text-secondary);margin-right:6px;flex-shrink:0;" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span id="heroPrivacy">Your bill is processed securely. Avoid sharing unnecessary personal information.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Upload & Lookup Section ── -->
+    <section class="upload-container" id="uploadArea">
+      <!-- ── Low-Network Bill Number Lookup Form ── -->
+      <div class="lookup-card" id="lookupCard">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px;">
+          <button class="btn-outline" style="padding:5px 12px;font-size:0.82rem;border:none;background:transparent;color:var(--primary);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" onclick="selectPatientOption('choice')" id="lookupBackBtn">
+            <svg class="lucide-icon icon-xs" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            <span id="lookupBackBtnText">Back</span>
+          </button>
+          <span style="font-size:0.75rem;font-weight:700;background:#f0fdf4;color:#166534;border:1px solid #86efac;padding:4px 10px;border-radius:100px;display:inline-flex;align-items:center;gap:6px;">
+            <svg class="lucide-icon icon-xs" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></svg>
+            <span>Low-Bandwidth Mode · Minimal data (&lt; 2 KB) · No Image Sent</span>
+          </span>
+        </div>
+
+        <div style="margin-bottom:1.5rem;">
+          <h2 style="font-size:1.5rem;font-weight:800;color:var(--text);margin-bottom:4px;" id="lookupHeading">Find Your Bill</h2>
+          <p style="font-size:0.9rem;color:var(--text-secondary);" id="lookupInstruction">Enter the bill number printed on your hospital receipt.</p>
+        </div>
+
+        <!-- Input field -->
+        <div class="lookup-input-wrapper">
+          <span class="icon">
+            <svg class="lucide-icon icon-sm" viewBox="0 0 24 24"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>
+          </span>
+          <input type="text" class="lookup-input" id="billLookupInput" placeholder="e.g. BILL-2026-001" onkeydown="handleLookupKeyDown(event)" />
+          <div class="lookup-error-badge" id="lookupEmptyError">
+            <svg class="lucide-icon icon-sm" style="color:var(--error);" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="lookupEmptyErrorText">Please enter the bill number printed on your receipt.</span>
+          </div>
+        </div>
+
+        <!-- Quick sample numbers for instant testing -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap;">
+          <span style="font-size:0.78rem;color:var(--text-tertiary);font-weight:600;">Demo receipts:</span>
+          <button class="btn-outline" style="padding:3px 10px;font-size:0.78rem;font-family:monospace;cursor:pointer;" onclick="fillLookupDemo('BILL-2026-001')">BILL-2026-001</button>
+          <button class="btn-outline" style="padding:3px 10px;font-size:0.78rem;font-family:monospace;cursor:pointer;" onclick="fillLookupDemo('INV-2026-0042')">INV-2026-0042</button>
+        </div>
+
+        <div>
+          <button class="btn-main" style="width:100%;justify-content:center;padding:14px;" id="btnFindMyBill" onclick="runBillLookup()">
+            <svg class="lucide-icon icon-sm" style="margin-right:6px;" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <span id="lookupFindBtnText">Find My Bill</span>
+          </button>
+        </div>
+
+        <!-- Not Found Box -->
+        <div class="lookup-notfound-box" id="lookupNotFoundBox">
+          <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;">
+            <svg class="lucide-icon icon-lg" style="color:#991b1b;margin-top:2px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <div>
+              <h4 style="font-size:0.98rem;font-weight:800;color:#991b1b;margin-bottom:4px;" id="lookupNotFoundTitle">Bill Not Found</h4>
+              <p style="font-size:0.86rem;color:#7f1d1d;line-height:1.5;margin:0;" id="lookupNotFoundMsg">
+                We couldn't find a bill with that number. Please check the number or upload a photo of your bill.
+              </p>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+            <button class="btn-outline" style="background:white;color:#991b1b;border-color:#fca5a5;font-weight:700;font-size:0.84rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" onclick="resetLookupInput()" id="lookupTryAnotherBtn">
+              <svg class="lucide-icon icon-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <span id="lookupTryAnotherBtnText">Try Another Bill Number</span>
+            </button>
+            <button class="btn-main" style="font-size:0.84rem;padding:9px 16px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" onclick="selectPatientOption('upload')" id="lookupUploadInsteadBtn">
+              <svg class="lucide-icon icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span id="lookupUploadInsteadBtnText">Upload Bill Instead</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Connection Error Box -->
+        <div class="lookup-neterror-box" id="lookupNetErrorBox">
+          <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;">
+            <svg class="lucide-icon icon-lg" style="color:#92400e;margin-top:2px;" viewBox="0 0 24 24"><line x1="2" y1="2" x2="22" y2="22"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+            <div>
+              <h4 style="font-size:0.98rem;font-weight:800;color:#92400e;margin-bottom:4px;" id="lookupNetErrorTitle">Connection Error</h4>
+              <p style="font-size:0.86rem;color:#78350f;line-height:1.5;margin:0;" id="lookupNetErrorMsg">
+                Could not connect to the hospital billing server. Please check your network and try again.
+              </p>
+            </div>
+          </div>
+          <button class="btn-main" style="background:#d97706;border:none;font-size:0.84rem;padding:8px 18px;margin-top:4px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" onclick="runBillLookup()" id="lookupRetryBtn">
+            <svg class="lucide-icon icon-sm" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+            <span id="lookupRetryBtnText">Retry Lookup</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Option 1: File Upload Card ── -->
+      <div class="box-card" id="uploadCard">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:1.5rem;">
+          <div>
+            <span style="font-size:0.78rem;font-weight:700;color:var(--primary);text-transform:uppercase;">Step 1 of 2</span>
+            <h2 style="font-size:1.45rem;font-weight:800;" id="uploadTitle">Upload Your Hospital Bill</h2>
+            <p style="font-size:0.88rem;color:var(--text-secondary);" id="uploadAccepted">Accepted: JPG, PNG, PDF, MP4/MOV, DOCX · Max 8 MB</p>
+          </div>
+          <button type="button" onclick="selectPatientOption('lookup')" style="background:none;border:1px solid #86efac;border-radius:6px;background-color:#f0fdf4;color:#166534;padding:6px 12px;font-size:0.8rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+            <svg class="lucide-icon icon-xs" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></svg>
+            <span>Slow connection?</span>
+            <span style="text-decoration:underline;">Enter Bill #</span>
+          </button>
+        </div>
+
+        <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+          <input type="file" id="fileInput" accept="image/*,application/pdf,video/*,.docx" onchange="handleFilePicked(this.files)" />
+          <div class="dropzone-icon">
+            <svg class="lucide-icon" style="width:44px;height:44px;color:var(--primary);" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <p style="font-weight:600;font-size:0.95rem;margin-bottom:4px;" id="dropzoneText">
+            Drag and drop your bill or supporting evidence here, or <span style="color:var(--primary);text-decoration:underline;">Browse Files</span>
+          </p>
+          <p style="font-size:0.8rem;color:var(--text-tertiary);" id="dropzoneSub">Images, PDF bills, lab slips, or video files</p>
+        </div>
+
+        <!-- Image Purge Assurance Notice -->
+        <div class="image-purge-badge">
+          <svg class="lucide-icon icon-sm" style="color:var(--secondary);" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+          <span><strong>Zero Image Retention:</strong> Uploaded images are processed in-memory and immediately destroyed. Only extracted fields (Bill #, Hospital ID, Amounts) are retained.</span>
+        </div>
+
+        <!-- Optional problem details -->
+        <div style="margin-top:1.5rem;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Hospital / Healthcare Provider</label>
+            <input type="text" id="patientHospitalInput" value="Sunrise Community Hospital" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem;" />
+          </div>
+          <div>
+            <label style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Bill / Invoice Number</label>
+            <input type="text" id="patientBillNumberInput" value="INV-2026-0042" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem;" />
+          </div>
+        </div>
+
+        <div style="margin-top:1.5rem;">
+          <button class="btn-main" style="width:100%;justify-content:center;display:inline-flex;align-items:center;gap:8px;" id="analyzeBtn" onclick="runAnalysis()">
+            <svg class="lucide-icon icon-sm" viewBox="0 0 24 24"><path d="M12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+            <span id="analyzeBtnText">Analyze Bill with AI</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading Indicator -->
+      <div class="loading-card" id="loadingCard">
+        <div class="spinner"></div>
+        <h2 style="font-size:1.35rem;font-weight:800;margin-bottom:6px;" id="loadingTitle">Reading your hospital bill…</h2>
+        <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:1.5rem;">AI is reviewing charges, verifying line items, and translating medical terms.</p>
+
+        <div class="loading-steps">
+          <div class="l-step current" id="step1">
+            <span id="stepIcon1"><svg class="lucide-icon icon-sm animate-spin" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg></span> <span id="stepLabel1">Extracting text with OCR and Vision…</span>
+          </div>
+          <div class="l-step" id="step2">
+            <span id="stepIcon2">2</span> <span id="stepLabel2">Identifying charges and billing items…</span>
+          </div>
+          <div class="l-step" id="step3">
+            <span id="stepIcon3">3</span> <span id="stepLabel3">Generating plain-language explanations…</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Results Section ── -->
+    <section class="results-container" id="resultsArea">
+      <!-- Banner -->
+      <div class="banner-badge demo" id="bannerBadge">
+        <svg class="lucide-icon icon-sm" style="color:var(--warning);" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="bannerText">Demo data — the results below use a sample bill, clearly demonstrated for testing.</span>
+      </div>
+
+      <!-- Image Destroyed Notice -->
+      <div class="image-purge-badge" style="margin-bottom:1.25rem;">
+        <svg class="lucide-icon icon-sm" style="color:#166534;" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        <span><strong>Image Purged from Memory:</strong> The uploaded image has been deleted. Only extracted line items and numbers remain.</span>
+      </div>
+
+      <!-- Header card -->
+      <div class="results-head-card">
+        <div>
+          <span style="font-size:0.78rem;font-weight:700;color:var(--primary);text-transform:uppercase;" id="resHospital">Sunrise Community Hospital</span>
+          <h2 style="font-size:1.65rem;font-weight:800;margin:4px 0;" id="resHeading">Here's What Your Bill Means</h2>
+          <p style="font-size:0.85rem;color:var(--text-secondary);" id="resSub">Hospital ID: HOSP-SUNRISE-01 · Bill #INV-2026-0042</p>
+        </div>
+        <div class="total-badge">
+          <div style="font-size:0.75rem;font-weight:700;color:var(--primary);text-transform:uppercase;" id="resTotalLabel">Total Bill</div>
+          <div style="font-size:1.7rem;font-weight:800;color:var(--primary);">₹ 3,100</div>
+        </div>
+      </div>
+
+      <!-- Voice Guidance / Listen to All Bar -->
+      <div class="voice-all-bar" id="voiceAllBar">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span id="voiceAllIcon" style="display:inline-flex;align-items:center;color:var(--primary);">
+            <svg class="lucide-icon" style="width:26px;height:26px;" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+          </span>
+          <div>
+            <h3 style="font-size:1rem;font-weight:700;margin:0;" id="voiceAllTitle">Voice Guidance & Audio Navigation</h3>
+            <p style="font-size:0.8rem;color:var(--text-secondary);margin:0;" id="voiceAllSub">
+              Listen to the entire bill: hospital name, bill number, all charges, and total amount.
+            </p>
+          </div>
+        </div>
+        <button class="btn-listen-all" id="btnListenToAll" onclick="toggleListenAll()">
+          <span id="btnListenAllIcon" style="display:inline-flex;align-items:center;margin-right:6px;">
+            <svg class="lucide-icon icon-sm" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+          </span>
+          <span id="btnListenAllText">Listen to All</span>
+        </button>
+      </div>
+
+      <!-- Item Cards vertical list -->
+      <div id="itemsContainer"></div>
+
+      <!-- Actions toolbar -->
+      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:1.5rem;flex-wrap:wrap;">
+        <button class="btn-outline" onclick="copySummary()" id="btnCopy" style="display:inline-flex;align-items:center;gap:6px;">
+          <svg class="lucide-icon icon-sm" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          <span id="btnCopyText">Copy Summary</span>
+        </button>
+        <button class="btn-outline" onclick="window.print()" id="btnPrint" style="display:inline-flex;align-items:center;gap:6px;">
+          <svg class="lucide-icon icon-sm" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+          <span id="btnPrintText">Download Report</span>
+        </button>
+        <button class="btn-outline" onclick="resetToInitial('lookup')" id="btnLookupAnother" style="display:inline-flex;align-items:center;gap:6px;">
+          <svg class="lucide-icon icon-sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <span id="btnLookupAnotherText">Look Up Another Bill</span>
+        </button>
+        <button class="btn-main" onclick="resetToInitial('upload')" id="btnNew" style="display:inline-flex;align-items:center;gap:6px;">
+          <svg class="lucide-icon icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span id="btnNewText">Upload Another Bill</span>
+        </button>
+      </div>
+
+      <!-- ── PATIENT SUPPORT TICKET REQUEST CARD ── -->
+      <div class="ticket-request-card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <span style="color:var(--primary);display:inline-flex;">
+            <svg class="lucide-icon icon-lg" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </span>
+          <div>
+            <h3 style="font-size:1.15rem;font-weight:800;color:var(--text);">Need Human Help? Connect with a Hospital Support Worker</h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);">Your request is linked directly to your Hospital ID and Bill Number. A worker will review your issue.</p>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;">
+          <div style="background:var(--surface-raised);padding:10px 14px;border-radius:8px;border:1px solid var(--border);">
+            <div style="font-size:0.72rem;color:var(--text-tertiary);font-weight:700;text-transform:uppercase;">Hospital ID</div>
+            <div style="font-weight:700;color:var(--text);font-size:0.95rem;" id="ticketHospitalIdDisplay">HOSP-SUNRISE-01</div>
+          </div>
+          <div style="background:var(--surface-raised);padding:10px 14px;border-radius:8px;border:1px solid var(--border);">
+            <div style="font-size:0.72rem;color:var(--text-tertiary);font-weight:700;text-transform:uppercase;">Bill Number</div>
+            <div style="font-weight:700;color:var(--text);font-size:0.95rem;" id="ticketBillNumDisplay">INV-2026-0042</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <label style="font-size:0.82rem;font-weight:700;display:block;margin-bottom:4px;">Describe what you need help with:</label>
+          <input type="text" id="ticketUserNote" placeholder="e.g. I do not understand why the X-ray is ₹1,200, please assist." style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem;" />
+        </div>
+
+        <!-- MANDATORY CONSENT CHECKBOX -->
+        <label class="consent-label" id="consentLabel">
+          <input type="checkbox" id="consentCheckbox" onchange="toggleConsent(this.checked)" />
+          <span>Share my request with this hospital’s support worker.</span>
+        </label>
+        <p style="font-size:0.78rem;color:var(--text-tertiary);margin-top:-6px;margin-bottom:14px;display:flex;align-items:center;gap:4px;">
+          <svg class="lucide-icon icon-xs" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <em>Required by patient privacy policy. Without explicit consent, no support ticket is generated.</em>
+        </p>
+
+        <button class="btn-main" id="btnSubmitTicket" onclick="createSupportTicket()" disabled style="opacity:0.5;cursor:not-allowed;display:inline-flex;align-items:center;justify-content:center;gap:6px;">
+          <svg class="lucide-icon icon-sm" viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+          <span id="btnSubmitTicketText">Generate Support Ticket</span>
+        </button>
+
+        <!-- ISSUED TICKET RECEIPT -->
+        <div class="ticket-issued-receipt" id="ticketReceipt">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+            <div>
+              <span style="display:inline-block;padding:3px 10px;border-radius:100px;background:#166534;color:white;font-size:0.72rem;font-weight:800;letter-spacing:0.05em;">TICKET CREATED</span>
+              <h4 style="font-size:1.35rem;font-weight:800;color:#14532d;margin:6px 0 2px;">Ticket ID: <span id="issuedTicketId">TCK-8492</span></h4>
+              <p style="font-size:0.85rem;color:#166534;">Show this Ticket ID to your hospital's support worker or billing counter.</p>
+            </div>
+            <button class="btn-outline" style="border-color:#22c55e;color:#166534;display:inline-flex;align-items:center;gap:6px;" onclick="switchViewMode('worker')">
+              <span>View in Hospital Worker Dashboard</span>
+              <svg class="lucide-icon icon-xs" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </button>
+          </div>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px dashed #86efac;font-size:0.82rem;color:#166534;display:flex;gap:18px;flex-wrap:wrap;">
+            <span><strong>Hospital:</strong> Sunrise Community Hospital (HOSP-SUNRISE-01)</span>
+            <span><strong>Bill:</strong> INV-2026-0042</span>
+            <span><strong>Status:</strong> Open / Pending Review</span>
+            <span><strong>Image:</strong> Purged (Zero Image Retention)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Contextual AI Chatbox ── -->
+      <div class="chatbox-card">
+        <div class="chat-header">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;">
+            <svg class="lucide-icon icon-sm" stroke="white" viewBox="0 0 24 24"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+          </div>
+          <div>
+            <h3 style="font-size:0.95rem;font-weight:700;" id="chatHead">Contextual AI Billing Assistant</h3>
+            <p style="font-size:0.75rem;color:var(--secondary);font-weight:600;">Active Session · Bill Context Loaded</p>
+          </div>
+        </div>
+
+        <div class="chat-messages" id="chatMsgs"></div>
+
+        <!-- Quick prompts -->
+        <div style="padding:8px 16px;background:white;border-top:1px solid var(--border);display:flex;gap:8px;overflow-x:auto;" id="quickPrompts"></div>
+
+        <!-- Input -->
+        <div class="chat-input-area">
+          <textarea class="chat-input" id="chatInput" rows="1" placeholder="Ask anything about your bill..." onkeydown="handleChatKey(event)"></textarea>
+          <button class="btn-send" onclick="sendChatMessage()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── How It Works ── -->
+    <section class="how-section" id="howItWorks">
+      <div style="max-width:1080px;margin:0 auto;text-align:center;">
+        <h2 style="font-size:1.8rem;font-weight:800;margin-bottom:2rem;" id="howTitle">How It Works</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem;text-align:left;">
+          <div style="background:var(--surface-raised);padding:24px;border-radius:16px;border:1px solid var(--border);">
+            <div style="margin-bottom:12px;color:var(--primary);">
+              <svg class="lucide-icon" style="width:32px;height:32px;" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:8px;" id="howStep1Title">1. Upload & Purge</h3>
+            <p style="font-size:0.88rem;color:var(--text-secondary);" id="howStep1Desc">Upload your hospital bill. Our system reads it in-memory, deletes the image immediately, and keeps only extracted numbers.</p>
+          </div>
+          <div style="background:var(--surface-raised);padding:24px;border-radius:16px;border:1px solid var(--border);">
+            <div style="margin-bottom:12px;color:var(--primary);">
+              <svg class="lucide-icon" style="width:32px;height:32px;" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+            </div>
+            <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:8px;" id="howStep2Title">2. Plain Language & Audio</h3>
+            <p style="font-size:0.88rem;color:var(--text-secondary);" id="howStep2Desc">AI explains every charge in simple words and speaks aloud in English, Hindi, or Kannada.</p>
+          </div>
+          <div style="background:var(--surface-raised);padding:24px;border-radius:16px;border:1px solid var(--border);">
+            <div style="margin-bottom:12px;color:var(--primary);">
+              <svg class="lucide-icon" style="width:32px;height:32px;" viewBox="0 0 24 24"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
+            </div>
+            <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:8px;" id="howStep3Title">3. Support Ticket</h3>
+            <p style="font-size:0.88rem;color:var(--text-secondary);" id="howStep3Desc">With explicit consent, get a Ticket ID linked to your Hospital ID and Bill Number to show hospital staff.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!-- 2. HOSPITAL WORKER DASHBOARD (SIMULATED ACCESS) -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <section class="dashboard-container" id="workerDashboard">
+    <!-- Judge & Evaluator Disclosure Notice -->
+    <div class="judge-disclosure-box">
+      <div style="display:flex;align-items:flex-start;gap:12px;">
+        <span style="color:#d97706;display:inline-flex;margin-top:2px;">
+          <svg class="lucide-icon icon-lg" viewBox="0 0 24 24"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+        </span>
+        <div>
+          <h3 style="font-size:1.05rem;font-weight:800;margin-bottom:4px;">Notice for Judges: Simulated Staff Access</h3>
+          <p style="font-size:0.86rem;line-height:1.6;margin:0;">
+            Hospital workers cannot log in directly in this prototype. The <strong>“Viewing as”</strong> dropdown below simulates role-based access for hospital support staff. In a production deployment, real authentication, audit trails, and access control would integrate directly with the hospital's Identity Provider (IdP/SSO/EHR system).
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Viewing As Header Card -->
+    <div class="viewing-as-card">
+      <div>
+        <span style="font-size:0.75rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.06em;">Simulated Role-Based Access</span>
+        <h2 style="font-size:1.35rem;font-weight:800;margin:2px 0 4px;">Hospital Support Worker Portal</h2>
+        <p style="font-size:0.84rem;color:var(--text-secondary);margin:0;">Showing only tickets routed to this specific hospital identifier.</p>
+      </div>
+
+      <!-- "Viewing as" Dropdown -->
+      <div>
+        <label style="font-size:0.78rem;font-weight:700;display:block;margin-bottom:4px;color:var(--text-secondary);">Viewing as:</label>
+        <select class="staff-select" id="hospitalWorkerSelect" onchange="renderWorkerTickets()">
+          <option value="HOSP-SUNRISE-01">Sunrise Community Hospital worker (ID: HOSP-SUNRISE-01)</option>
+          <option value="HOSP-CITY-001">City General Hospital worker (ID: HOSP-CITY-001)</option>
+          <option value="HOSP-APEX-002">Apex Memorial Hospital worker (ID: HOSP-APEX-002)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Worker Tickets List -->
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h3 style="font-size:1.1rem;font-weight:800;" id="ticketCountHeader">Assigned Tickets (0)</h3>
+        <span style="font-size:0.8rem;color:var(--text-tertiary);">Zero Image Retention · Text Only</span>
+      </div>
+
+      <div id="workerTicketsContainer"></div>
+    </div>
+  </section>
+
+  <!-- ── Footer ── -->
+  <footer>
+    <div style="max-width:1080px;margin:0 auto;font-size:0.82rem;color:var(--text-tertiary);line-height:1.6;">
+      <p style="margin-bottom:8px;display:flex;align-items:center;gap:6px;" id="footerDisclaimer">
+        <svg class="lucide-icon icon-xs" style="color:var(--text-tertiary);" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span><strong>Disclaimer:</strong> MediExplain AI provides informational assistance only. It does not constitute medical, legal, or financial advice. Always verify billing information with your healthcare provider.</span>
+      </p>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:12px;">
+        <span>© 2026 MediExplain AI</span>
+        <span>Transparent Healthcare Finance · Simulated Worker Access</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ── Global State ──
+    let currentLang = 'en';
+    let currentViewMode = 'patient';
+
+    // Seed Initial Tickets tied to Hospital IDs
+    const INITIAL_TICKETS = [
+      {
+        ticketId: "TCK-8492",
+        hospitalId: "HOSP-SUNRISE-01",
+        hospitalName: "Sunrise Community Hospital",
+        billNumber: "INV-2026-0042",
+        patientNote: "Patient questions the X-Ray charge (₹1,200) and asks if Ayushman Bharat PM-JAY applies.",
+        amountTotal: "₹ 3,100",
+        consentVerified: true,
+        createdAt: "Today at 7:45 PM",
+        status: "Open"
+      },
+      {
+        ticketId: "TCK-7120",
+        hospitalId: "HOSP-SUNRISE-01",
+        hospitalName: "Sunrise Community Hospital",
+        billNumber: "INV-2026-0038",
+        patientNote: "Wants clarification on pharmacy medicine brand substitutes.",
+        amountTotal: "₹ 1,840",
+        consentVerified: true,
+        createdAt: "Yesterday at 11:20 AM",
+        status: "In Progress"
+      },
+      {
+        ticketId: "TCK-9031",
+        hospitalId: "HOSP-CITY-001",
+        hospitalName: "City General Hospital",
+        billNumber: "CGH-88219",
+        patientNote: "Duplicate consultation entry suspected by elderly patient.",
+        amountTotal: "₹ 2,400",
+        consentVerified: true,
+        createdAt: "Today at 3:10 PM",
+        status: "Open"
+      },
+      {
+        ticketId: "TCK-6294",
+        hospitalId: "HOSP-APEX-002",
+        hospitalName: "Apex Memorial Hospital",
+        billNumber: "APX-5510",
+        patientNote: "Dispute regarding post-op dressing kit fees.",
+        amountTotal: "₹ 4,750",
+        consentVerified: true,
+        createdAt: "Oct 17, 2026",
+        status: "Resolved"
+      }
+    ];
+
+    // Initialize LocalStorage for Tickets if not present
+    if (!localStorage.getItem('mediexplain_tickets')) {
+      localStorage.setItem('mediexplain_tickets', JSON.stringify(INITIAL_TICKETS));
+    }
+
+    function getTickets() {
+      try {
+        return JSON.parse(localStorage.getItem('mediexplain_tickets')) || INITIAL_TICKETS;
+      } catch {
+        return INITIAL_TICKETS;
+      }
+    }
+
+    function saveTickets(list) {
+      localStorage.setItem('mediexplain_tickets', JSON.stringify(list));
+    }
+
+    // ── Switch View Mode (Patient Explainer vs Hospital Worker) ──
+    function switchViewMode(mode) {
+      currentViewMode = mode;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+      if (mode === 'patient') {
+        document.getElementById('tabPatient').classList.add('active');
+        document.getElementById('patientView').style.display = 'block';
+        document.getElementById('workerDashboard').style.display = 'none';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        document.getElementById('tabWorker').classList.add('active');
+        document.getElementById('patientView').style.display = 'none';
+        document.getElementById('workerDashboard').style.display = 'block';
+        renderWorkerTickets();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    // ── Render Worker Tickets based on "Viewing as" selector ──
+    function renderWorkerTickets() {
+      const select = document.getElementById('hospitalWorkerSelect');
+      const selectedHospId = select.value;
+      const allTickets = getTickets();
+      const filtered = allTickets.filter(t => t.hospitalId === selectedHospId);
+
+      const countHeader = document.getElementById('ticketCountHeader');
+      countHeader.textContent = `Assigned Tickets (${filtered.length}) for ${selectedHospId}`;
+
+      const container = document.getElementById('workerTicketsContainer');
+      container.innerHTML = '';
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div style="background:var(--surface);border:1px dashed var(--border);border-radius:16px;padding:40px;text-align:center;color:var(--text-tertiary);">
+            <div style="margin-bottom:8px;color:var(--text-tertiary);">
+              <svg class="lucide-icon" style="width:36px;height:36px;" viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+            </div>
+            <h4 style="font-size:1.05rem;color:var(--text);margin-bottom:4px;">No Tickets for this Hospital</h4>
+            <p style="font-size:0.85rem;">When a patient with this Hospital ID checks the consent box and submits a ticket, it will appear here instantly.</p>
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(ticket => {
+        const div = document.createElement('div');
+        div.className = 'ticket-card';
+        const statusClass = ticket.status === 'Open' ? 'open' : ticket.status === 'In Progress' ? 'progress' : 'resolved';
+
+        div.innerHTML = `
+          <div class="ticket-head">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-family:monospace;font-weight:800;font-size:1rem;color:var(--primary);">${ticket.ticketId}</span>
+                <span class="badge-status ${statusClass}">${ticket.status}</span>
+                <span style="font-size:0.75rem;background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:4px;font-weight:600;display:inline-flex;align-items:center;gap:4px;">
+                  <svg class="lucide-icon icon-xs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                  Patient Consent Verified
+                </span>
+              </div>
+              <h4 style="font-size:1rem;font-weight:700;margin:6px 0 2px;">Bill Number: <span style="font-family:monospace;">${ticket.billNumber}</span> · Total: ${ticket.amountTotal}</h4>
+              <p style="font-size:0.78rem;color:var(--text-tertiary);">${ticket.hospitalName} (${ticket.hospitalId}) · Created ${ticket.createdAt}</p>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn-outline" style="padding:6px 12px;font-size:0.78rem;" onclick="updateTicketStatus('${ticket.ticketId}', 'In Progress')">Mark In Progress</button>
+              <button class="btn-outline" style="padding:6px 12px;font-size:0.78rem;border-color:var(--success);color:var(--success);" onclick="updateTicketStatus('${ticket.ticketId}', 'Resolved')">Resolve</button>
+            </div>
+          </div>
+          <div style="font-size:0.88rem;color:var(--text);line-height:1.6;background:var(--surface-raised);padding:10px 14px;border-radius:8px;margin-bottom:8px;">
+            <strong>Patient Problem Description:</strong> ${escapeHtml(ticket.patientNote)}
+          </div>
+          <div style="font-size:0.75rem;color:var(--text-tertiary);display:flex;gap:16px;">
+            <span style="display:inline-flex;align-items:center;gap:4px;">
+              <svg class="lucide-icon icon-xs" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+              <strong>Image:</strong> Purged from memory (zero image storage)
+            </span>
+            <span style="display:inline-flex;align-items:center;gap:4px;">
+              <svg class="lucide-icon icon-xs" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              <strong>Contact Action:</strong> Ready for hospital worker review
+            </span>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function updateTicketStatus(id, newStatus) {
+      const tickets = getTickets();
+      const match = tickets.find(t => t.ticketId === id);
+      if (match) {
+        match.status = newStatus;
+        saveTickets(tickets);
+        renderWorkerTickets();
+      }
+    }
+
+    // ── Patient Consent and Ticket Submission ──
+    function toggleConsent(isChecked) {
+      const btn = document.getElementById('btnSubmitTicket');
+      if (isChecked) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+      } else {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.cursor = 'not-allowed';
+      }
+    }
+
+    function createSupportTicket() {
+      const consentBox = document.getElementById('consentCheckbox');
+      if (!consentBox.checked) {
+        alert("Patient consent is required: You must check 'Share my request with this hospital’s support worker' to generate a ticket.");
+        return;
+      }
+
+      const hospId = document.getElementById('ticketHospitalIdDisplay').textContent.trim() || "HOSP-SUNRISE-01";
+      const billNum = document.getElementById('ticketBillNumDisplay').textContent.trim() || "INV-2026-0042";
+      const userNote = document.getElementById('ticketUserNote').value.trim() || "Patient requests explanation of line item charges and financial support options.";
+
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      const ticketId = `TCK-${randomNum}`;
+
+      const newTicket = {
+        ticketId: ticketId,
+        hospitalId: hospId,
+        hospitalName: "Sunrise Community Hospital",
+        billNumber: billNum,
+        patientNote: userNote,
+        amountTotal: "₹ 3,100",
+        consentVerified: true,
+        createdAt: "Just now",
+        status: "Open"
+      };
+
+      const tickets = getTickets();
+      tickets.unshift(newTicket);
+      saveTickets(tickets);
+
+      // Show receipt
+      document.getElementById('issuedTicketId').textContent = ticketId;
+      document.getElementById('ticketReceipt').style.display = 'block';
+      document.getElementById('btnSubmitTicket').style.display = 'none';
+      document.getElementById('consentLabel').style.display = 'none';
+    }
+
+    // ── Internationalization Data (English, Hindi, Kannada) ──
+    const I18N = {
+      en: {
+        tagline: "Your hospital bill, explained simply.",
+        badge: "GenAI Powered · Multilingual · Audio Guidance",
+        heroTitle: "Understand Your Hospital Bill.",
+        heroSub: "Upload a photo of your hospital bill to understand each charge in simple language. You can also listen to the explanation in your preferred language.",
+        ctaUpload: "Upload Bill",
+        ctaHow: "How It Works",
+        privacy: "Your bill is processed securely. Avoid sharing unnecessary personal information.",
+        sampleBadge: "Sample Hospital Bill",
+        demoBtn: "Click to Try Demo Analysis Instantly",
+        optUploadTitle: "Option 1: Upload Bill",
+        optUploadDesc: "Upload a photo or document of your hospital bill for AI OCR & line-by-line explanation.",
+        optUploadBtn: "Upload Bill",
+        optLookupTitle: "Option 2: Enter Bill Number",
+        optLookupDesc: "Having a slow internet connection? Enter your bill number instead.",
+        optLookupBtn: "Enter Bill Number",
+        lookupHeading: "Find Your Bill",
+        lookupInstruction: "Enter the bill number printed on your hospital receipt.",
+        lookupPlaceholder: "e.g. BILL-2026-001",
+        lookupFindBtn: "Find My Bill",
+        lookupSearching: "Searching hospital records...",
+        lookupBack: "Back",
+        lookupEmptyError: "Please enter the bill number printed on your receipt.",
+        lookupNotFoundTitle: "Bill Not Found",
+        lookupNotFoundMsg: "We couldn't find a bill with that number. Please check the number or upload a photo of your bill.",
+        lookupTryAnother: "Try Another Bill Number",
+        lookupUploadInstead: "Upload Bill Instead",
+        lookupNetErrorTitle: "Connection Error",
+        lookupNetErrorMsg: "Could not connect to the hospital billing server. Please check your network and try again.",
+        lookupRetry: "Retry Lookup",
+        uploadTitle: "Upload Your Hospital Bill",
+        uploadAccepted: "Accepted: JPG, PNG, PDF, MP4/MOV, DOCX · Max 8 MB",
+        analyzeBtn: "Analyze Bill with AI",
+        loadingTitle: "Reading your hospital bill…",
+        resHeading: "Here's What Your Bill Means",
+        resTotal: "Total Bill",
+        listen: "Listen",
+        stop: "Stop",
+        voiceAllTitle: "Voice Guidance & Audio Navigation",
+        voiceAllSub: "Listen to the entire bill: hospital name, bill number, all charges, and total amount.",
+        voiceAllListen: "Listen to All",
+        voiceAllStop: "Stop Playback",
+        bannerDemo: "Demo data — the results below use a sample bill, clearly demonstrated for testing.",
+        chatHead: "Contextual AI Billing Assistant",
+        chatPlaceholder: "Ask anything about your bill...",
+        prompts: [
+          "Explain the consultation fee in simpler terms.",
+          "Is this amount typical for a blood test?",
+          "How do I dispute a charge I think is wrong?"
+        ],
+        items: [
+          { name: "Consultation Fee", amount: "₹ 800", text: "A fee for meeting and discussing your health with your attending physician." },
+          { name: "Complete Blood Count (CBC)", amount: "₹ 450", text: "A routine blood test checking your overall health and screening for infections or anemia." },
+          { name: "Chest X-Ray (PA View)", amount: "₹ 1,200", text: "An X-ray imaging scan of your chest to examine your lungs and heart." },
+          { name: "Pharmacy - Antibiotics & Pain Relief", amount: "₹ 650", text: "Prescription medications provided by the hospital pharmacy for infection treatment and pain management." }
+        ],
+        chatGreeting: "Hello! I've reviewed your bill from **Sunrise Community Hospital** (total: ₹ 3,100). Ask me anything about specific charges, discounts, or next steps!"
+      },
+      hi: {
+        tagline: "आपका अस्पताल का बिल, सरल भाषा में।",
+        badge: "GenAI संचालित · बहुभाषी · ऑडियो मार्गदर्शन",
+        heroTitle: "अपना अस्पताल बिल समझें।",
+        heroSub: "अपने अस्पताल बिल की फ़ोटो अपलोड करें और हर शुल्क को सरल भाषा में समझें। आप अपनी पसंदीदा भाषा में स्पष्टीकरण सुन भी सकते हैं।",
+        ctaUpload: "बिल अपलोड करें",
+        ctaHow: "यह कैसे काम करता है",
+        privacy: "आपका बिल सुरक्षित रूप से संसाधित किया जाता है। अनावश्यक व्यक्तिगत जानकारी साझा करने से बचें।",
+        sampleBadge: "नमूना अस्पताल बिल",
+        demoBtn: "डेमो विश्लेषण तुरंत आज़माएँ",
+        optUploadTitle: "विकल्प 1: बिल अपलोड करें",
+        optUploadDesc: "AI OCR और पंक्ति-वार व्याख्या के लिए अपने बिल का फ़ोटो अपलोड करें।",
+        optUploadBtn: "बिल अपलोड करें",
+        optLookupTitle: "विकल्प 2: बिल नंबर दर्ज करें",
+        optLookupDesc: "धीमा इंटरनेट है? इसके बजाय रसीद पर दिया गया बिल नंबर दर्ज करें।",
+        optLookupBtn: "बिल नंबर दर्ज करें",
+        lookupHeading: "अपना बिल खोजें",
+        lookupInstruction: "अपनी अस्पताल रसीद पर छपा बिल नंबर दर्ज करें।",
+        lookupPlaceholder: "उदा. BILL-2026-001",
+        lookupFindBtn: "मेरा बिल खोजें",
+        lookupSearching: "अस्पताल रिकॉर्ड खोज रहे हैं...",
+        lookupBack: "वापस",
+        lookupEmptyError: "कृपया अपनी रसीद पर छपा बिल नंबर दर्ज करें।",
+        lookupNotFoundTitle: "बिल नहीं मिला",
+        lookupNotFoundMsg: "हमें उस नंबर का कोई बिल नहीं मिला। कृपया नंबर जांचें या अपने बिल का फ़ोटो अपलोड करें।",
+        lookupTryAnother: "दूसरा बिल नंबर आज़माएँ",
+        lookupUploadInstead: "इसके बजाय बिल अपलोड करें",
+        lookupNetErrorTitle: "कनेक्शन त्रुटि",
+        lookupNetErrorMsg: "अस्पताल बिलिंग सर्वर से कनेक्ट नहीं हो सका। कृपया अपना नेटवर्क जांचें और पुनः प्रयास करें।",
+        lookupRetry: "पुनः खोजें",
+        uploadTitle: "अपना अस्पताल बिल अपलोड करें",
+        uploadAccepted: "स्वीकृत: JPG, PNG, PDF, MP4/MOV, DOCX · अधिकतम 8 MB",
+        analyzeBtn: "AI से बिल का विश्लेषण करें",
+        loadingTitle: "आपका अस्पताल बिल पढ़ा जा रहा है…",
+        resHeading: "आपके बिल का अर्थ",
+        resTotal: "कुल बिल",
+        listen: "सुनें",
+        stop: "रोकें",
+        voiceAllTitle: "ऑडियो मार्गदर्शन और वॉइस नेविगेशन",
+        voiceAllSub: "पूरा बिल सुनें: अस्पताल का नाम, बिल नंबर, सभी मद और कुल राशि।",
+        voiceAllListen: "सब सुनें",
+        voiceAllStop: "ऑडियो रोकें",
+        bannerDemo: "डेमो डेटा — नीचे दिए गए परिणाम एक नमूना बिल पर आधारित हैं।",
+        chatHead: "प्रासंगिक AI बिलिंग सहायक",
+        chatPlaceholder: "अपने बिल के बारे में कुछ भी पूछें...",
+        prompts: [
+          "परामर्श शुल्क को और सरल भाषा में समझाएं।",
+          "रक्त परीक्षण के लिए यह राशि सामान्य है?",
+          "गलत शुल्क का विवाद कैसे करें?"
+        ],
+        items: [
+          { name: "परामर्श शुल्क (Consultation Fee)", amount: "₹ 800", text: "यह आपके उपस्थित चिकित्सक के साथ आपके स्वास्थ्य पर चर्चा करने और चिकित्सा परामर्श के लिए शुल्क है।" },
+          { name: "कम्पलीट ब्लड काउंट (CBC Blood Test)", amount: "₹ 450", text: "यह आपके समग्र स्वास्थ्य की जाँच और संक्रमण या एनीमिया की पहचान के लिए एक नियमित रक्त परीक्षण है।" },
+          { name: "छाती का एक्स-रे (Chest X-Ray PA View)", amount: "₹ 1,200", text: "यह आपके फेफड़ों और हृदय की जांच करने के लिए आपकी छाती का एक एक्स-रे इमेजिंग स्कैन है।" },
+          { name: "फार्मेसी - एंटीबायोटिक्स और दर्द निवारक", amount: "₹ 650", text: "संक्रमण के उपचार और दर्द प्रबंधन के लिए अस्पताल फार्मेसी द्वारा दी गई नुस्खे वाली दवाएं।" }
+        ],
+        chatGreeting: "नमस्ते! मैंने **Sunrise Community Hospital** के आपके बिल का विश्लेषण कर लिया है (कुल: ₹ 3,100)। किसी भी शुल्क या सहायता के बारे में मुझसे पूछें!"
+      },
+      kn: {
+        tagline: "ನಿಮ್ಮ ಆಸ್ಪತ್ರೆ ಬಿಲ್, ಸರಳ ಭಾಷೆಯಲ್ಲಿ.",
+        badge: "GenAI ಚಾಲಿತ · ಬಹುಭಾಷಾ · ಆಡಿಯೋ ಮಾರ್ಗದರ್ಶನ",
+        heroTitle: "ನಿಮ್ಮ ಆಸ್ಪತ್ರೆ ಬಿಲ್ ಅರ್ಥಮಾಡಿಕೊಳ್ಳಿ.",
+        heroSub: "ನಿಮ್ಮ ಆಸ್ಪತ್ರೆ ಬಿಲ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ ಮತ್ತು ಪ್ರತಿ ಶುಲ್ಕವನ್ನು ಸರಳ ಕನ್ನಡದಲ್ಲಿ ಅರ್ಥಮಾಡಿಕೊಳ್ಳಿ. ನೀವು ವಿವರಣೆಯನ್ನು ಕೇಳಲೂಬಹುದು.",
+        ctaUpload: "ಬಿಲ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
+        ctaHow: "ಇದು ಹೇಗೆ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತದೆ",
+        privacy: "ನಿಮ್ಮ ಬಿಲ್ ಅನ್ನು ಸುರಕ್ಷಿತವಾಗಿ ಸಂಸ್ಕರಿಸಲಾಗುತ್ತದೆ. ಅನಗತ್ಯ ವೈಯಕ್ತಿಕ ವಿವರಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಬೇಡಿ.",
+        sampleBadge: "ಮಾದರಿ ಆಸ್ಪತ್ರೆ ಬಿಲ್",
+        demoBtn: "ಡೆಮೊ ವಿಶ್ಲೇಷಣೆಯನ್ನು ತಕ್ಷಣ ಪ್ರಯತ್ನಿಸಿ",
+        optUploadTitle: "ಆಯ್ಕೆ 1: ಬಿಲ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
+        optUploadDesc: "AI OCR ಮತ್ತು ಸಾಲು-ಸಾಲಿನ ವಿವರಣೆಗಾಗಿ ನಿಮ್ಮ ಆಸ್ಪತ್ರೆ ಬಿಲ್ ಫೋಟೋ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.",
+        optUploadBtn: "ಬಿಲ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
+        optLookupTitle: "ಆಯ್ಕೆ 2: ಬಿಲ್ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ",
+        optLookupDesc: "ನಿಧಾನ ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕವಿದೆಯೇ? ರಶೀದಿಯ ಬಿಲ್ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ.",
+        optLookupBtn: "ಬಿಲ್ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ",
+        lookupHeading: "ನಿಮ್ಮ ಬಿಲ್ ಹುಡುಕಿ",
+        lookupInstruction: "ನಿಮ್ಮ ಆಸ್ಪತ್ರೆಯ ರಶೀದಿಯಲ್ಲಿ ಮುದ್ರಿಸಲಾದ ಬಿಲ್ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ.",
+        lookupPlaceholder: "ಉದಾ. BILL-2026-001",
+        lookupFindBtn: "ನನ್ನ ಬಿಲ್ ಹುಡುಕಿ",
+        lookupSearching: "ದಾಖಲೆಗಳನ್ನು ಹುಡುಕಲಾಗುತ್ತಿದೆ...",
+        lookupBack: "ಹಿಂದಕ್ಕೆ",
+        lookupEmptyError: "ದಯವಿಟ್ಟು ನಿಮ್ಮ ರಶೀದಿಯ ಬಿಲ್ ಸಂಖ್ಯೆಯನ್ನು ನಮೂದಿಸಿ.",
+        lookupNotFoundTitle: "ಬಿಲ್ ಕಂಡುಬಂದಿಲ್ಲ",
+        lookupNotFoundMsg: "ಆ ಸಂಖ್ಯೆಯ ಯಾವುದೇ ಬಿಲ್ ನಮಗೆ ಸಿಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಸಂಖ್ಯೆ ಪರಿಶೀಲಿಸಿ ಅಥವಾ ಬಿಲ್ ಫೋಟೋ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.",
+        lookupTryAnother: "ಮತ್ತೊಂದು ಬಿಲ್ ಸಂಖ್ಯೆ ಪ್ರಯತ್ನಿಸಿ",
+        lookupUploadInstead: "ಬದಲಿಗೆ ಬಿಲ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
+        lookupNetErrorTitle: "ಸಂಪರ್ಕ ದೋಷ",
+        lookupNetErrorMsg: "ಆಸ್ಪತ್ರೆಯ ಬಿಲ್ಲಿಂಗ್ ಸರ್ವರ್‌ಗೆ ಸಂಪರ್ಕಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ನೆಟ್‌ವರ್ಕ್ ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+        lookupRetry: "ಮತ್ತೆ ಹುಡುಕಿ",
+        uploadTitle: "ನಿಮ್ಮ ಆಸ್ಪತ್ರೆ ಬಿಲ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
+        uploadAccepted: "ಸ್ವೀಕರಿಸಲಾಗುವ ಮಾದರಿಗಳು: JPG, PNG, PDF, MP4/MOV, DOCX · ಗರಿಷ್ಠ 8 MB",
+        analyzeBtn: "AI ನೊಂದಿಗೆ ಬಿಲ್ ವಿಶ್ಲೇಷಿಸಿ",
+        loadingTitle: "ನಿಮ್ಮ ಆಸ್ಪತ್ರೆ ಬಿಲ್ ಓದಲಾಗುತ್ತಿದೆ…",
+        resHeading: "ನಿಮ್ಮ ಬಿಲ್‌ನ ವಿವರಣೆ",
+        resTotal: "ಒಟ್ಟು ಬಿಲ್",
+        listen: "ಕೇಳಿ",
+        stop: "ನಿಲ್ಲಿಸಿ",
+        voiceAllTitle: "ಧ್ವನಿ ಮಾರ್ಗದರ್ಶನ ಮತ್ತು ಆಡಿಯೋ",
+        voiceAllSub: "ಸಂಪೂರ್ಣ ಬಿಲ್ ಆಲಿಸಿ: ಆಸ್ಪತ್ರೆ ಹೆಸರು, ಬಿಲ್ ಸಂಖ್ಯೆ, ಶುಲ್ಕಗಳು ಮತ್ತು ಒಟ್ಟು ಮೊತ್ತ.",
+        voiceAllListen: "ಎಲ್ಲವನ್ನೂ ಕೇಳಿ",
+        voiceAllStop: "ಆಡಿಯೋ ನಿಲ್ಲಿಸಿ",
+        bannerDemo: "ಡೆಮೊ ಡೇಟಾ — ಕೆಳಗಿನ ಫಲಿತಾಂಶಗಳು ಪರೀಕ್ಷಾರ್ಥ ಮಾದರಿ ಬಿಲ್ ಆಧರಿಸಿವೆ.",
+        chatHead: "ಸಂದರ್ಭೋಚಿತ AI ಬಿಲ್ಲಿಂಗ್ ಸಹಾಯಕ",
+        chatPlaceholder: "ನಿಮ್ಮ ಬಿಲ್ ಬಗ್ಗೆ ಯಾವುದೇ ಪ್ರಶ್ನೆ ಕೇಳಿ...",
+        prompts: [
+          "ಕನ್ಸಲ್ಟೇಶನ್ ಶುಲ್ಕವನ್ನು ಇನ್ನಷ್ಟು ಸರಳವಾಗಿ ವಿವರಿಸಿ.",
+          "ರಕ್ತ ಪರೀಕ್ಷೆಗೆ ಈ ಮೊತ್ತ ಸಾಮಾನ್ಯವೇ?",
+          "ತಪ್ಪಾದ ಶುಲ್ಕವನ್ನು ಪ್ರಶ್ನಿಸುವುದು ಹೇಗೆ?"
+        ],
+        items: [
+          { name: "ಸಮಾಲೋಚನೆ ಶುಲ್ಕ (Consultation Fee)", amount: "₹ 800", text: "ನಿಮ್ಮ ಹಾಜರಿದ್ದ ವೈದ್ಯರನ್ನು ಭೇಟಿಯಾಗಿ ನಿಮ್ಮ ಆರೋಗ್ಯದ ಬಗ್ಗೆ ಸಮಾಲೋಚನೆ ನಡೆಸಲು ತಗಲುವ ಶುಲ್ಕ." },
+          { name: "ಕಂಪ್ಲೀಟ್ ಬ್ಲಡ್ ಕೌಂಟ್ (CBC Blood Test)", amount: "₹ 450", text: "ನಿಮ್ಮ ಒಟ್ಟಾರೆ ಆರೋಗ್ಯ ಮತ್ತು ಸೋಂಕುಗಳು ಅಥವಾ ರಕ್ತಹೀನತೆಯನ್ನು ಪರೀಕ್ಷಿಸಲು ನಡೆಸುವ ವಾಡಿಕೆಯ ರಕ್ತ ಪರೀಕ್ಷೆ." },
+          { name: "ಎದೆಯ ಎಕ್ಸ್‌ರೇ (Chest X-Ray PA View)", amount: "₹ 1,200", text: "ನಿಮ್ಮ ಶ್ವಾಸಕೋಶ ಮತ್ತು ಹೃದಯವನ್ನು ಪರೀಕ್ಷಿಸಲು ಎದೆಯ ಭಾಗದ ಎಕ್ಸ್‌ರೇ ಇಮೇಜಿಂಗ್ ಸ್ಕ್ಯಾನ್." },
+          { name: "ಫಾರ್ಮಸಿ - ಆಂಟಿಬಯೋಟಿಕ್ಸ್ ಮತ್ತು ನೋವು ನಿವಾರಕ", amount: "₹ 650", text: "ಸೋಂಕು ನಿವಾರಣೆ ಮತ್ತು ನೋವು ನಿರ್ವಹಣೆಗಾಗಿ ಆಸ್ಪತ್ರೆಯ ಔಷಧಾಲಯದಿಂದ ನೀಡಲಾದ ಶಿಫಾರಸು ಔಷಧಿಗಳು." }
+        ],
+        chatGreeting: "ನಮಸ್ಕಾರ! ನಾನು **Sunrise Community Hospital** ನ ನಿಮ್ಮ ಬಿಲ್ ವಿಶ್ಲೇಷಣೆ ಮಾಡಿದ್ದೇನೆ (ಒಟ್ಟು: ₹ 3,100). ಯಾವುದೇ ಶುಲ್ಕಗಳ ಬಗ್ಗೆ ನಿಸ್ಸಂಕೋಚವಾಗಿ ಕೇಳಿ!"
+      }
+    };
+
+    function switchLanguage(lang, btn) {
+      currentLang = lang;
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      const data = I18N[lang];
+      document.getElementById('brandTagline').textContent = data.tagline;
+      document.getElementById('heroBadge').textContent = data.badge;
+      document.getElementById('heroTitle').textContent = data.heroTitle;
+      document.getElementById('heroSub').textContent = data.heroSub;
+      document.getElementById('optUploadTitle').textContent = data.optUploadTitle;
+      document.getElementById('optUploadDesc').textContent = data.optUploadDesc;
+      document.getElementById('optUploadBtn').textContent = data.optUploadBtn;
+      document.getElementById('optLookupTitle').textContent = data.optLookupTitle;
+      document.getElementById('optLookupDesc').textContent = data.optLookupDesc;
+      document.getElementById('optLookupBtn').textContent = data.optLookupBtn;
+      document.getElementById('heroCtaHow').textContent = data.ctaHow;
+      document.getElementById('heroPrivacy').textContent = data.privacy;
+
+      // Lookup form
+      document.getElementById('lookupHeading').textContent = data.lookupHeading;
+      document.getElementById('lookupInstruction').textContent = data.lookupInstruction;
+      document.getElementById('billLookupInput').placeholder = data.lookupPlaceholder;
+      document.getElementById('lookupFindBtnText').textContent = data.lookupFindBtn;
+      const lookupBackText = document.getElementById('lookupBackBtnText');
+      if (lookupBackText) lookupBackText.textContent = data.lookupBack;
+      document.getElementById('lookupEmptyErrorText').textContent = data.lookupEmptyError;
+      document.getElementById('lookupNotFoundTitle').textContent = data.lookupNotFoundTitle;
+      document.getElementById('lookupNotFoundMsg').textContent = data.lookupNotFoundMsg;
+      const tryAnotherText = document.getElementById('lookupTryAnotherBtnText');
+      if (tryAnotherText) tryAnotherText.textContent = data.lookupTryAnother;
+      const uploadInsteadText = document.getElementById('lookupUploadInsteadBtnText');
+      if (uploadInsteadText) uploadInsteadText.textContent = data.lookupUploadInstead;
+      document.getElementById('lookupNetErrorTitle').textContent = data.lookupNetErrorTitle;
+      document.getElementById('lookupNetErrorMsg').textContent = data.lookupNetErrorMsg;
+      const retryText = document.getElementById('lookupRetryBtnText');
+      if (retryText) retryText.textContent = data.lookupRetry;
+
+      // Upload
+      document.getElementById('uploadTitle').textContent = data.uploadTitle;
+      document.getElementById('uploadAccepted').textContent = data.uploadAccepted;
+      document.getElementById('analyzeBtnText').textContent = data.analyzeBtn;
+      document.getElementById('loadingTitle').textContent = data.loadingTitle;
+
+      // Results
+      document.getElementById('resHeading').textContent = data.resHeading;
+      document.getElementById('resTotalLabel').textContent = data.resTotal;
+      document.getElementById('bannerText').textContent = data.bannerDemo;
+      document.getElementById('voiceAllTitle').textContent = data.voiceAllTitle;
+      document.getElementById('voiceAllSub').textContent = data.voiceAllSub;
+      document.getElementById('btnListenAllText').textContent = isSpeakingAll ? data.voiceAllStop : data.voiceAllListen;
+
+      // Chat
+      document.getElementById('chatHead').textContent = data.chatHead;
+      document.getElementById('chatInput').placeholder = data.chatPlaceholder;
+
+      renderLineItems();
+      renderQuickPrompts();
+    }
+
+    // ── Patient Workflow Navigation ──
+    let currentPatientOption = 'choice';
+
+    function selectPatientOption(opt) {
+      currentPatientOption = opt;
+      const uploadCard = document.getElementById('uploadCard');
+      const lookupCard = document.getElementById('lookupCard');
+      const loadingCard = document.getElementById('loadingCard');
+      loadingCard.style.display = 'none';
+
+      if (opt === 'upload') {
+        uploadCard.style.display = 'block';
+        lookupCard.style.display = 'none';
+        uploadCard.scrollIntoView({ behavior: 'smooth' });
+      } else if (opt === 'lookup') {
+        uploadCard.style.display = 'none';
+        lookupCard.style.display = 'block';
+        resetLookupErrors();
+        lookupCard.scrollIntoView({ behavior: 'smooth' });
+        setTimeout(() => document.getElementById('billLookupInput').focus(), 100);
+      } else {
+        uploadCard.style.display = 'block';
+        lookupCard.style.display = 'none';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function scrollToUpload() {
+      selectPatientOption('upload');
+    }
+
+    // ── Low-Network Bill Lookup Logic ──
+    function resetLookupErrors() {
+      document.getElementById('lookupEmptyError').style.display = 'none';
+      document.getElementById('lookupNotFoundBox').style.display = 'none';
+      document.getElementById('lookupNetErrorBox').style.display = 'none';
+      document.getElementById('billLookupInput').classList.remove('error');
+    }
+
+    function resetLookupInput() {
+      resetLookupErrors();
+      const input = document.getElementById('billLookupInput');
+      input.value = '';
+      input.focus();
+    }
+
+    function fillLookupDemo(num) {
+      const input = document.getElementById('billLookupInput');
+      input.value = num;
+      resetLookupErrors();
+      runBillLookup();
+    }
+
+    function handleLookupKeyDown(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        runBillLookup();
+      }
+    }
+
+    function runBillLookup() {
+      const input = document.getElementById('billLookupInput');
+      const val = input.value.trim();
+      resetLookupErrors();
+
+      if (!val) {
+        input.classList.add('error');
+        document.getElementById('lookupEmptyError').style.display = 'flex';
+        input.focus();
+        return;
+      }
+
+      // Minimal low-network simulated transfer (400ms delay)
+      const btn = document.getElementById('btnFindMyBill');
+      const originalText = document.getElementById('lookupFindBtnText').textContent;
+      document.getElementById('lookupFindBtnText').textContent = I18N[currentLang].lookupSearching;
+      btn.style.opacity = '0.75';
+      btn.style.cursor = 'wait';
+
+      setTimeout(() => {
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+        document.getElementById('lookupFindBtnText').textContent = originalText;
+
+        const normalized = val.toUpperCase().replace(/\s+/g, '');
+
+        // Simulated network error trigger
+        if (normalized === 'NET_ERROR' || normalized === 'FAIL' || !navigator.onLine) {
+          document.getElementById('lookupNetErrorBox').style.display = 'block';
+          return;
+        }
+
+        // Recognized demo receipts
+        const recognized = [
+          'BILL-2026-001', 'INV-2026-0042', 'DEMO-2026-001',
+          'BILL2026001', 'INV20260042', 'DEMO2026001'
+        ];
+
+        if (recognized.includes(normalized)) {
+          const formattedNum = normalized.startsWith('INV') ? 'INV-2026-0042' : normalized.startsWith('DEMO') ? 'DEMO-2026-001' : 'BILL-2026-001';
+          showBillResults({
+            hospitalName: "Sunrise Community Hospital",
+            hospitalId: "HOSP-SUNRISE-01",
+            billNumber: formattedNum,
+            total: "₹ 3,100"
+          });
+        } else {
+          // Explicit Not Found — zero automatic fallback to unrelated bill!
+          document.getElementById('lookupNotFoundBox').style.display = 'block';
+        }
+      }, 400);
+    }
+
+    // ── Zero Image Retention in Action ──
+    let ephemeralImageObjectUrl = null;
+
+    function handleFilePicked(files) {
+      if (!files || !files[0]) return;
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        if (ephemeralImageObjectUrl) {
+          URL.revokeObjectURL(ephemeralImageObjectUrl);
+        }
+        ephemeralImageObjectUrl = URL.createObjectURL(file);
+      }
+    }
+
+    function runAnalysis() {
+      // Ephemeral image purged from browser memory immediately on processing
+      if (ephemeralImageObjectUrl) {
+        URL.revokeObjectURL(ephemeralImageObjectUrl);
+        ephemeralImageObjectUrl = null;
+      }
+      const fileInput = document.getElementById('fileInput');
+      if (fileInput) fileInput.value = '';
+
+      document.getElementById('uploadCard').style.display = 'none';
+      document.getElementById('lookupCard').style.display = 'none';
+      document.getElementById('loadingCard').style.display = 'block';
+
+      // Step animations
+      setTimeout(() => {
+        document.getElementById('step1').className = 'l-step done';
+        document.getElementById('stepIcon1').innerHTML = '<svg class="lucide-icon icon-xs" style="color:#16a34a;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>';
+        document.getElementById('step2').className = 'l-step current';
+        document.getElementById('stepIcon2').innerHTML = '<svg class="lucide-icon icon-xs animate-spin" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
+      }, 800);
+
+      setTimeout(() => {
+        document.getElementById('step2').className = 'l-step done';
+        document.getElementById('stepIcon2').innerHTML = '<svg class="lucide-icon icon-xs" style="color:#16a34a;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>';
+        document.getElementById('step3').className = 'l-step current';
+        document.getElementById('stepIcon3').innerHTML = '<svg class="lucide-icon icon-xs animate-spin" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
+      }, 1600);
+
+      setTimeout(() => {
+        document.getElementById('loadingCard').style.display = 'none';
+        const hosp = document.getElementById('patientHospitalInput').value || "Sunrise Community Hospital";
+        const bnum = document.getElementById('patientBillNumberInput').value || "BILL-2026-001";
+        showBillResults({
+          hospitalName: hosp,
+          hospitalId: "HOSP-SUNRISE-01",
+          billNumber: bnum,
+          total: "₹ 3,100"
+        });
+      }, 2400);
+    }
+
+    function showBillResults(billData) {
+      if (ephemeralImageObjectUrl) {
+        URL.revokeObjectURL(ephemeralImageObjectUrl);
+        ephemeralImageObjectUrl = null;
+      }
+      const fileInput = document.getElementById('fileInput');
+      if (fileInput) fileInput.value = '';
+
+      document.getElementById('uploadArea').style.display = 'none';
+      document.getElementById('heroArea').style.display = 'none';
+      document.getElementById('resultsArea').style.display = 'block';
+
+      document.getElementById('resHospital').textContent = billData.hospitalName;
+      document.getElementById('resSub').textContent = `Hospital ID: ${billData.hospitalId} · Bill #${billData.billNumber}`;
+      document.getElementById('ticketHospitalIdDisplay').textContent = billData.hospitalId;
+      document.getElementById('ticketBillNumDisplay').textContent = billData.billNumber;
+
+      renderLineItems();
+      initChat();
+      resetListenAllState();
+      document.getElementById('resultsArea').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function resetToInitial(mode) {
+      if (window.speechSynthesis && window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+      }
+      resetListenAllState();
+      document.getElementById('resultsArea').style.display = 'none';
+      document.getElementById('heroArea').style.display = 'block';
+      document.getElementById('uploadArea').style.display = 'block';
+      selectPatientOption(mode || 'choice');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── Voice Guidance / Listen to All ──
+    let isSpeakingAll = false;
+
+    function toggleListenAll() {
+      if (!('speechSynthesis' in window)) {
+        alert("Text to speech is not supported in this browser.");
+        return;
+      }
+
+      const btn = document.getElementById('btnListenToAll');
+      const bar = document.getElementById('voiceAllBar');
+      const t = I18N[currentLang];
+
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        resetListenAllState();
+        return;
+      }
+
+      // Stop any individual active speech
+      document.querySelectorAll('.btn-listen').forEach(b => {
+        b.classList.remove('speaking');
+        b.innerHTML = `<svg class="lucide-icon icon-xs" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg><span>${t.listen}</span>`;
+      });
+      currentSpeech = null;
+
+      const hosp = document.getElementById('resHospital').textContent;
+      const billNum = document.getElementById('ticketBillNumDisplay').textContent;
+      const items = I18N[currentLang].items;
+
+      let script = "";
+      if (currentLang === 'hi') {
+        script = `${hosp} का बिल विवरण। बिल नंबर ${billNum}। कुल बिल राशि तीन हजार एक सौ रुपये। `;
+        items.forEach((item, idx) => {
+          script += `मद ${idx + 1}: ${item.name}, राशि ${item.amount}। ${item.text}। `;
+        });
+      } else if (currentLang === 'kn') {
+        script = `${hosp} ಆಸ್ಪತ್ರೆಯ ವಿವರಣೆ. ಬಿಲ್ ಸಂಖ್ಯೆ ${billNum}. ಒಟ್ಟು ಮೊತ್ತ ಮೂರು ಸಾವಿರದ ನೂರು ರೂಪಾಯಿಗಳು. `;
+        items.forEach((item, idx) => {
+          script += `ಶುಲ್ಕ ${idx + 1}: ${item.name}, ಮೊತ್ತ ${item.amount}. ${item.text}. `;
+        });
+      } else {
+        script = `Medical statement from ${hosp}. Bill number ${billNum}. Total bill is 3,100 rupees. `;
+        items.forEach((item, idx) => {
+          script += `Item ${idx + 1}: ${item.name}, amount ${item.amount}. ${item.text}. `;
+        });
+      }
+
+      const utterance = new SpeechSynthesisUtterance(script);
+      utterance.lang = currentLang === 'hi' ? 'hi-IN' : currentLang === 'kn' ? 'kn-IN' : 'en-IN';
+      utterance.rate = 0.95;
+
+      utterance.onend = () => resetListenAllState();
+      utterance.onerror = () => resetListenAllState();
+
+      isSpeakingAll = true;
+      if (bar) bar.classList.add('speaking');
+      if (btn) {
+        btn.classList.add('speaking');
+        document.getElementById('btnListenAllIcon').innerHTML = '<svg class="lucide-icon icon-sm" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" fill="currentColor"/></svg>';
+        document.getElementById('btnListenAllText').textContent = t.voiceAllStop;
+      }
+      document.getElementById('voiceAllTitle').textContent =
+        currentLang === 'hi' ? "पूरा बिल पढ़ा जा रहा है..." : currentLang === 'kn' ? "ಸಂಪೂರ್ಣ ಬಿಲ್ ಓದಲಾಗುತ್ತಿದೆ..." : "Reading Entire Bill Aloud...";
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function resetListenAllState() {
+      isSpeakingAll = false;
+      const btn = document.getElementById('btnListenToAll');
+      const bar = document.getElementById('voiceAllBar');
+      const t = I18N[currentLang];
+      if (bar) bar.classList.remove('speaking');
+      if (btn) {
+        btn.classList.remove('speaking');
+        document.getElementById('btnListenAllIcon').innerHTML = '<svg class="lucide-icon icon-sm" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>';
+        document.getElementById('btnListenAllText').textContent = t.voiceAllListen;
+      }
+      const title = document.getElementById('voiceAllTitle');
+      if (title) title.textContent = t.voiceAllTitle;
+    }
+
+    // ── Render Line Items with TTS ──
+    let currentSpeech = null;
+
+    function renderLineItems() {
+      const container = document.getElementById('itemsContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const items = I18N[currentLang].items;
+      const t = I18N[currentLang];
+
+      items.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'item-card';
+        div.innerHTML = `
+          <div class="item-header">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="item-num">${index + 1}</div>
+              <h3 style="font-size:1.05rem;font-weight:700;">${item.name}</h3>
+            </div>
+            <div class="item-amount">${item.amount}</div>
+          </div>
+          <p class="item-explanation">${item.text}</p>
+          <button class="btn-listen" id="listenBtn_${index}" onclick="playSpeech('${encodeURIComponent(item.name)}. ${encodeURIComponent(item.text)}', ${index})" style="display:inline-flex;align-items:center;gap:6px;">
+            <svg class="lucide-icon icon-xs" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+            <span>${t.listen}</span>
+          </button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function playSpeech(encodedText, index) {
+      const text = decodeURIComponent(encodedText);
+      const btn = document.getElementById('listenBtn_' + index);
+      const t = I18N[currentLang];
+
+      if (!('speechSynthesis' in window)) {
+        alert("Text to speech is not supported in this browser.");
+        return;
+      }
+
+      // Stop listen all if speaking
+      if (isSpeakingAll) {
+        resetListenAllState();
+      }
+
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        document.querySelectorAll('.btn-listen').forEach(b => {
+          b.classList.remove('speaking');
+          b.innerHTML = `<svg class="lucide-icon icon-xs" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg><span>${t.listen}</span>`;
+        });
+        if (currentSpeech === index) {
+          currentSpeech = null;
+          return;
+        }
+      }
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = currentLang === 'hi' ? 'hi-IN' : currentLang === 'kn' ? 'kn-IN' : 'en-IN';
+      utterance.rate = 0.95;
+
+      utterance.onend = () => {
+        btn.classList.remove('speaking');
+        btn.innerHTML = `<svg class="lucide-icon icon-xs" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg><span>${t.listen}</span>`;
+        currentSpeech = null;
+      };
+
+      utterance.onerror = () => {
+        btn.classList.remove('speaking');
+        btn.innerHTML = `<svg class="lucide-icon icon-xs" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg><span>${t.listen}</span>`;
+        currentSpeech = null;
+      };
+
+      btn.classList.add('speaking');
+      btn.innerHTML = `<svg class="lucide-icon icon-xs" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" fill="currentColor"/></svg><span>${t.stop}</span>`;
+      currentSpeech = index;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // ── Chatbox logic ──
+    function initChat() {
+      const msgs = document.getElementById('chatMsgs');
+      msgs.innerHTML = '';
+      appendBotMsg(I18N[currentLang].chatGreeting);
+      renderQuickPrompts();
+    }
+
+    function renderQuickPrompts() {
+      const qp = document.getElementById('quickPrompts');
+      if (!qp) return;
+      qp.innerHTML = '';
+      I18N[currentLang].prompts.forEach(p => {
+        const btn = document.createElement('button');
+        btn.style.cssText = "padding:6px 12px;border-radius:100px;border:1px solid var(--primary);background:var(--primary-light);color:var(--primary);font-size:0.78rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;display:inline-flex;align-items:center;gap:6px;";
+        btn.innerHTML = `<svg class="lucide-icon icon-xs" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>${escapeHtml(p)}</span>`;
+        btn.onclick = () => {
+          document.getElementById('chatInput').value = p;
+          sendChatMessage();
+        };
+        qp.appendChild(btn);
+      });
+    }
+
+    function handleChatKey(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+      }
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+
+      appendUserMsg(text);
+
+      const msgs = document.getElementById('chatMsgs');
+      const typing = document.createElement('div');
+      typing.className = 'msg-row bot';
+      typing.id = 'typingRow';
+      typing.innerHTML = `<div class="msg-bubble" style="color:var(--text-tertiary);display:inline-flex;align-items:center;gap:6px;"><svg class="lucide-icon icon-xs animate-spin" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg><span>Thinking…</span></div>`;
+      msgs.appendChild(typing);
+      msgs.scrollTop = msgs.scrollHeight;
+
+      setTimeout(() => {
+        const tRow = document.getElementById('typingRow');
+        if (tRow) tRow.remove();
+
+        let reply = "";
+        if (currentLang === 'hi') {
+          reply = "यह एक अच्छा सवाल है। परामर्श शुल्क और अन्य मदों पर यदि आपको कोई संदेह है तो अस्पताल के बिलिंग काउंटर से मद-वार (Itemized) बिल मांग सकते हैं।";
+        } else if (currentLang === 'kn') {
+          reply = "ಉತ್ತಮ ಪ್ರಶ್ನೆ. ನಿಮ್ಮ ಆಸ್ಪತ್ರೆಯ ಬಿಲ್ಲಿಂಗ್ ವಿಭಾಗದಿಂದ ವಿವರವಾದ (Itemized) ರಶೀದಿಯನ್ನು ಪಡೆದು ಡಿಸ್ಚಾರ್ಜ್ ಸಾರಾಂಶದೊಂದಿಗೆ ಹೋಲಿಸಿ ನೋಡಿ.";
+        } else {
+          reply = "Great question! Hospital charges can often be clarified or contested by requesting a fully itemized bill from the patient billing office and comparing it against your discharge summary.";
+        }
+        appendBotMsg(reply);
+      }, 1000);
+    }
+
+    function appendUserMsg(text) {
+      const msgs = document.getElementById('chatMsgs');
+      const div = document.createElement('div');
+      div.className = 'msg-row user';
+      div.innerHTML = `<div class="msg-bubble">${escapeHtml(text)}</div>`;
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function appendBotMsg(text) {
+      const msgs = document.getElementById('chatMsgs');
+      const div = document.createElement('div');
+      div.className = 'msg-row bot';
+      div.innerHTML = `<div class="msg-bubble">${text}</div>`;
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function copySummary() {
+      const btn = document.getElementById('btnCopy');
+      const items = I18N[currentLang].items;
+      const text = "Hospital Bill Summary:\nTotal: ₹ 3,100\n" + items.map((it, i) => `${i+1}. ${it.name}: ${it.amount} - ${it.text}`).join('\n');
+      navigator.clipboard.writeText(text).then(() => {
+        btn.innerHTML = '<svg class="lucide-icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> <span>Copied!</span>';
+        setTimeout(() => {
+          btn.innerHTML = '<svg class="lucide-icon icon-sm" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> <span>Copy Summary</span>';
+        }, 2000);
+      });
+    }
+
+    // Initialize
+    switchLanguage('en', null);
+  </script>
+</body>
+</html>

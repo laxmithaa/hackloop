@@ -1,0 +1,1107 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analyze Bill – BillSaathi</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a6cf2' stroke-width='2.5'><path d='M12 6v12M6 12h12'/></svg>" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #1a6cf2;
+      --primary-dark: #1254c8;
+      --primary-light: #e8f0fe;
+      --secondary: #0ea875;
+      --secondary-light: #e6f7f2;
+      --accent: #f59e0b;
+      --accent-light: #fef3c7;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --bg: #f8faff;
+      --surface: #ffffff;
+      --surface2: #f1f5f9;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --radius-lg: 24px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', 'Noto Sans Devanagari', 'Noto Sans Kannada', sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.6;
+      min-height: 100vh; display: flex; flex-direction: column;
+    }
+    /* ── LANG ── */
+    [data-lang] { display: none; }
+    .lang-en [data-lang="en"] { display: block; }
+    .lang-hi [data-lang="hi"] { display: block; }
+    .lang-kn [data-lang="kn"] { display: block; }
+    [data-lang-inline] { display: none; }
+    .lang-en [data-lang-inline="en"],
+    .lang-hi [data-lang-inline="hi"],
+    .lang-kn [data-lang-inline="kn"] { display: inline; }
+
+    /* ── NAVBAR ── */
+    .navbar {
+      position: sticky; top: 0; z-index: 200;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem; display: flex; align-items: center;
+      justify-content: space-between; height: 64px; flex-shrink: 0;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo {
+      width: 36px; height: 36px; border-radius: 9px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; color: white;
+    }
+    .nav-title { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+    .nav-title span { color: var(--primary); }
+    .nav-actions { display: flex; align-items: center; gap: 12px; }
+    .lang-switcher {
+      display: flex; align-items: center; gap: 4px;
+      background: var(--surface2); border-radius: 10px;
+      padding: 4px; border: 1px solid var(--border);
+    }
+    .lang-btn {
+      padding: 4px 11px; border-radius: 7px; border: none;
+      font-size: 0.78rem; font-weight: 600; cursor: pointer;
+      background: transparent; color: var(--text-muted); transition: all 0.2s;
+    }
+    .lang-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(26,108,242,0.3); }
+
+    /* ── MAIN LAYOUT ── */
+    .main { flex: 1; display: flex; flex-direction: column; }
+    .app-container {
+      max-width: 1200px; margin: 0 auto; width: 100%;
+      padding: 2rem; flex: 1; display: flex; flex-direction: column;
+    }
+    .page-header { margin-bottom: 2rem; }
+    .page-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.35rem; }
+    .page-subtitle { font-size: 0.9rem; color: var(--text-muted); }
+
+    /* ── STEP WIZARD ── */
+    .wizard-steps {
+      display: flex; align-items: center; gap: 0; margin-bottom: 2.5rem;
+    }
+    .wstep {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 8px;
+    }
+    .wstep:first-child { padding-left: 0; }
+    .wstep-num {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700;
+      background: var(--surface2); color: var(--text-muted);
+      border: 2px solid var(--border); flex-shrink: 0; transition: all 0.3s;
+    }
+    .wstep.active .wstep-num { background: var(--primary); color: white; border-color: var(--primary); }
+    .wstep.done .wstep-num { background: var(--secondary); color: white; border-color: var(--secondary); }
+    .wstep-label { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+    .wstep.active .wstep-label { color: var(--primary); }
+    .wstep.done .wstep-label { color: var(--secondary); }
+    .wstep-line { flex: 1; height: 2px; background: var(--border); min-width: 24px; transition: all 0.3s; }
+    .wstep-line.done { background: var(--secondary); }
+
+    /* ── CARDS ── */
+    .card {
+      background: white; border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .card-header {
+      padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .card-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+    }
+    .card-header h2 { font-size: 1rem; font-weight: 700; }
+    .card-header p { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+    .card-body { padding: 1.5rem; }
+
+    /* ── UPLOAD ZONE ── */
+    .upload-zone {
+      border: 2px dashed var(--border); border-radius: var(--radius);
+      padding: 3rem 2rem; text-align: center; cursor: pointer;
+      transition: all 0.25s; background: var(--surface2);
+      position: relative;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--primary); background: var(--primary-light);
+    }
+    .upload-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .upload-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .upload-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .upload-sub { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem; }
+    .upload-formats {
+      display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+    }
+    .format-pill {
+      padding: 4px 10px; border-radius: 100px;
+      background: white; border: 1px solid var(--border);
+      font-size: 0.72rem; font-weight: 600; color: var(--text-muted);
+    }
+
+    /* File preview list */
+    .file-list { display: flex; flex-direction: column; gap: 8px; margin-top: 1rem; }
+    .file-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; background: white; border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .file-thumb {
+      width: 40px; height: 40px; border-radius: 8px;
+      background: var(--primary-light); display: flex;
+      align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;
+    }
+    .file-info { flex: 1; min-width: 0; }
+    .file-name { font-size: 0.85rem; font-weight: 600; truncate: ellipsis; white-space: nowrap; overflow: hidden; }
+    .file-size { font-size: 0.75rem; color: var(--text-muted); }
+    .file-remove {
+      width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border);
+      background: white; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; color: var(--text-muted); font-size: 0.9rem; flex-shrink: 0;
+    }
+    .file-remove:hover { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+
+    /* OR divider */
+    .or-divider {
+      display: flex; align-items: center; gap: 12px; margin: 1.25rem 0;
+    }
+    .or-divider::before, .or-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .or-divider span { font-size: 0.8rem; color: var(--text-light); font-weight: 500; }
+
+    /* Bill number input */
+    .input-group { display: flex; gap: 10px; }
+    .input-field {
+      flex: 1; padding: 10px 14px; border-radius: 10px;
+      border: 1px solid var(--border); font-size: 0.9rem;
+      font-family: inherit; background: white; transition: all 0.2s;
+      color: var(--text);
+    }
+    .input-field:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,108,242,0.1); }
+    .input-field::placeholder { color: var(--text-light); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #3b82f6);
+      color: white; border: none; padding: 10px 22px;
+      border-radius: 10px; font-weight: 600; font-size: 0.9rem;
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
+      font-family: inherit;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,108,242,0.4); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-secondary {
+      background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+      padding: 10px 22px; border-radius: 10px; font-weight: 600; font-size: 0.9rem;
+      cursor: pointer; transition: all 0.2s; font-family: inherit;
+    }
+    .btn-secondary:hover { background: var(--border); }
+
+    /* ── ANALYSIS LOADING ── */
+    .analyzing-screen {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 4rem 2rem; text-align: center;
+    }
+    .spinner {
+      width: 64px; height: 64px; border-radius: 50%;
+      border: 4px solid var(--primary-light);
+      border-top-color: var(--primary);
+      animation: spin 1s linear infinite; margin-bottom: 1.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .analyzing-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .analyzing-sub { font-size: 0.9rem; color: var(--text-muted); }
+    .analyzing-steps { display: flex; flex-direction: column; gap: 8px; margin-top: 1.5rem; text-align: left; width: 100%; max-width: 300px; }
+    .a-step {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.85rem; color: var(--text-muted);
+    }
+    .a-step .check { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; }
+    .a-step.done .check { background: var(--secondary); color: white; }
+    .a-step.current .check { background: var(--primary); color: white; animation: pulse-check 1s infinite; }
+    .a-step.pending .check { background: var(--surface2); border: 1px solid var(--border); }
+    @keyframes pulse-check { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    .a-step.done { color: var(--text); }
+    .a-step.current { color: var(--primary); font-weight: 600; }
+
+    /* ── RESULTS LAYOUT ── */
+    .results-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;
+    }
+    .results-full { grid-column: 1/-1; }
+
+    /* Bill Summary */
+    .summary-banner {
+      padding: 1.25rem 1.5rem;
+      background: linear-gradient(135deg, #e8f0fe, #f0fdf4);
+      border-radius: var(--radius); border: 1px solid rgba(26,108,242,0.1);
+      display: flex; gap: 16px; align-items: flex-start; margin-bottom: 1.25rem;
+    }
+    .summary-banner .ai-badge {
+      flex-shrink: 0; padding: 4px 10px; border-radius: 100px;
+      background: linear-gradient(135deg, var(--primary), #3b82f6);
+      color: white; font-size: 0.72rem; font-weight: 700;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .summary-banner p { font-size: 0.9rem; line-height: 1.7; color: var(--text); }
+
+    .amount-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 1.25rem;
+    }
+    .amount-card {
+      padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border);
+    }
+    .amount-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; margin-bottom: 6px; }
+    .amount-val { font-size: 1.35rem; font-weight: 800; }
+    .amount-val.blue { color: var(--primary); }
+    .amount-val.green { color: var(--secondary); }
+    .amount-val.red { color: var(--danger); }
+    .amount-val.orange { color: var(--accent); }
+    .amount-card.highlight-red { background: var(--danger-light); border-color: rgba(239,68,68,0.2); }
+    .amount-card.highlight-green { background: var(--secondary-light); border-color: rgba(14,168,117,0.2); }
+
+    /* Aid Schemes */
+    .scheme-list { display: flex; flex-direction: column; gap: 8px; }
+    .scheme-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; background: var(--surface2); border-radius: 10px;
+      border: 1px solid var(--border); transition: all 0.2s;
+    }
+    .scheme-item:hover { border-color: var(--secondary); background: var(--secondary-light); }
+    .scheme-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .scheme-info { flex: 1; }
+    .scheme-name { font-size: 0.88rem; font-weight: 700; }
+    .scheme-desc { font-size: 0.78rem; color: var(--text-muted); }
+    .scheme-badge {
+      padding: 3px 9px; border-radius: 100px;
+      font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
+    }
+    .scheme-badge.eligible { background: var(--secondary-light); color: var(--secondary); }
+    .scheme-badge.check { background: var(--accent-light); color: #b45309; }
+
+    /* Payment Plans */
+    .plan-list { display: flex; flex-direction: column; gap: 8px; }
+    .plan-item {
+      padding: 14px; border-radius: 10px; border: 2px solid var(--border);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .plan-item:hover, .plan-item.selected { border-color: var(--primary); background: var(--primary-light); }
+    .plan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .plan-name { font-size: 0.9rem; font-weight: 700; }
+    .plan-amount { font-size: 1rem; font-weight: 800; color: var(--primary); }
+    .plan-desc { font-size: 0.78rem; color: var(--text-muted); }
+
+    /* Consent Banner */
+    .consent-card {
+      padding: 1.25rem; background: var(--accent-light);
+      border: 1px solid rgba(245,158,11,0.2); border-radius: var(--radius);
+      display: flex; gap: 14px; align-items: flex-start;
+    }
+    .consent-card .icon { font-size: 1.5rem; flex-shrink: 0; }
+    .consent-card h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .consent-card p { font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; }
+    .consent-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .btn-sm {
+      padding: 7px 14px; border-radius: 8px; font-size: 0.8rem;
+      font-weight: 600; cursor: pointer; border: 1px solid var(--border);
+      background: white; color: var(--text); font-family: inherit; transition: all 0.2s;
+    }
+    .btn-sm.primary { background: var(--primary); color: white; border-color: var(--primary); }
+    .btn-sm:hover { transform: translateY(-1px); }
+
+    /* ── CHAT PANEL ── */
+    .chat-panel {
+      display: flex; flex-direction: column;
+      height: 480px; background: white;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .chat-header {
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .chat-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; color: white; flex-shrink: 0;
+    }
+    .chat-name { font-size: 0.9rem; font-weight: 700; }
+    .chat-status {
+      font-size: 0.72rem; color: var(--secondary);
+      display: flex; align-items: center; gap: 4px;
+    }
+    .chat-status::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--secondary); }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+    .chat-messages::-webkit-scrollbar { width: 4px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .msg { display: flex; gap: 8px; align-items: flex-end; max-width: 85%; }
+    .msg.bot { align-self: flex-start; }
+    .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+    .msg-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; flex-shrink: 0; color: white;
+    }
+    .msg-bubble {
+      padding: 10px 14px; border-radius: 16px;
+      font-size: 0.85rem; line-height: 1.6; max-width: 100%;
+    }
+    .msg.bot .msg-bubble {
+      background: var(--surface2); color: var(--text);
+      border-bottom-left-radius: 4px;
+    }
+    .msg.user .msg-bubble {
+      background: linear-gradient(135deg, var(--primary), #3b82f6);
+      color: white; border-bottom-right-radius: 4px;
+    }
+    .msg-time { font-size: 0.68rem; color: var(--text-light); margin-top: 4px; padding: 0 4px; }
+
+    /* Typing indicator */
+    .typing-indicator { display: flex; gap: 4px; padding: 12px 14px; align-items: center; }
+    .typing-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--text-light); animation: typing 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-8px)} }
+
+    .chat-quick-replies { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 14px 10px; }
+    .quick-reply {
+      padding: 6px 12px; border-radius: 100px; border: 1px solid var(--primary);
+      background: var(--primary-light); color: var(--primary);
+      font-size: 0.75rem; font-weight: 600; cursor: pointer;
+      transition: all 0.2s; font-family: inherit;
+    }
+    .quick-reply:hover { background: var(--primary); color: white; }
+
+    .chat-input-area {
+      padding: 12px 14px; border-top: 1px solid var(--border);
+      display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0;
+    }
+    .chat-input {
+      flex: 1; padding: 9px 14px; border-radius: 20px;
+      border: 1px solid var(--border); font-size: 0.85rem;
+      font-family: inherit; resize: none; max-height: 100px;
+      background: var(--surface2); color: var(--text); transition: all 0.2s;
+    }
+    .chat-input:focus { outline: none; border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(26,108,242,0.1); }
+    .chat-input::placeholder { color: var(--text-light); }
+    .chat-send {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--primary); border: none; color: white;
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0; transition: all 0.2s;
+    }
+    .chat-send:hover { background: var(--primary-dark); transform: scale(1.05); }
+    .chat-send svg { width: 16px; height: 16px; }
+
+    /* ── SCREENS ── */
+    .screen { display: none; }
+    .screen.active { display: flex; flex-direction: column; flex: 1; }
+
+    /* ── TOAST ── */
+    .toast-container { position: fixed; top: 80px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      padding: 12px 18px; border-radius: 10px; background: var(--text);
+      color: white; font-size: 0.85rem; font-weight: 500;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      animation: slideIn 0.3s ease; max-width: 320px;
+    }
+    .toast.success { background: var(--secondary); }
+    .toast.error { background: var(--danger); }
+    @keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.5s ease both; }
+
+    /* ── MOBILE ── */
+    @media (max-width: 768px) {
+      .results-grid { grid-template-columns: 1fr; }
+      .amount-grid { grid-template-columns: 1fr 1fr; }
+      .wizard-steps { overflow-x: auto; padding-bottom: 8px; }
+      .wstep-label { display: none; }
+      .app-container { padding: 1rem; }
+      .chat-panel { height: 400px; }
+    }
+  </style>
+</head>
+<body class="lang-en">
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="index.html" class="nav-brand">
+    <div class="nav-logo" style="display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 6v12M6 12h12"/></svg></div>
+    <div class="nav-title">Bill<span>Saathi</span></div>
+  </a>
+  <div class="nav-actions">
+    <div class="lang-switcher">
+      <button class="lang-btn active" onclick="setLang('en',this)">EN</button>
+      <button class="lang-btn" onclick="setLang('hi',this)">हि</button>
+      <button class="lang-btn" onclick="setLang('kn',this)">ಕ</button>
+    </div>
+  </div>
+</nav>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="main">
+  <div class="app-container">
+    <!-- Wizard Steps -->
+    <div class="wizard-steps" id="wizardSteps">
+      <div class="wstep active" data-step="1">
+        <div class="wstep-num">1</div>
+        <div class="wstep-label" data-lang="en">Upload</div>
+        <div class="wstep-label" data-lang="hi">अपलोड</div>
+        <div class="wstep-label" data-lang="kn">ಅಪ್‌ಲೋಡ್</div>
+      </div>
+      <div class="wstep-line" id="line1"></div>
+      <div class="wstep" data-step="2">
+        <div class="wstep-num">2</div>
+        <div class="wstep-label" data-lang="en">Analysis</div>
+        <div class="wstep-label" data-lang="hi">विश्लेषण</div>
+        <div class="wstep-label" data-lang="kn">ವಿಶ್ಲೇಷಣೆ</div>
+      </div>
+      <div class="wstep-line" id="line2"></div>
+      <div class="wstep" data-step="3">
+        <div class="wstep-num">3</div>
+        <div class="wstep-label" data-lang="en">Results &amp; Chat</div>
+        <div class="wstep-label" data-lang="hi">परिणाम &amp; चैट</div>
+        <div class="wstep-label" data-lang="kn">ಫಲಿತಾಂಶ &amp; ಚಾಟ್</div>
+      </div>
+    </div>
+
+    <!-- ═══ SCREEN 1: UPLOAD ═══ -->
+    <div class="screen active" id="screen1">
+      <div class="page-header fade-up">
+        <div class="page-title">
+          <span data-lang="en">Upload Your Document</span>
+          <span data-lang="hi">अपना दस्तावेज़ अपलोड करें</span>
+          <span data-lang="kn">ನಿಮ್ಮ ದಾಖಲೆ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ</span>
+        </div>
+        <div class="page-subtitle">
+          <span data-lang="en">Upload your hospital bill, insurance statement, or any related document. Our AI will analyze it instantly.</span>
+          <span data-lang="hi">अपना अस्पताल बिल, बीमा विवरण या कोई संबंधित दस्तावेज़ अपलोड करें। हमारा AI इसे तुरंत विश्लेषण करेगा।</span>
+          <span data-lang="kn">ನಿಮ್ಮ ಆಸ್ಪತ್ರೆ ಬಿಲ್, ವಿಮಾ ಹೇಳಿಕೆ ಅಥವಾ ಯಾವುದೇ ಸಂಬಂಧಿತ ದಾಖಲೆ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.</span>
+        </div>
+      </div>
+
+      <div class="card fade-up">
+        <div class="card-header">
+          <div class="card-icon" style="background:#e8f0fe;display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a6cf2" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
+          <div>
+            <h2 data-lang="en">Upload Documents / Photos / Videos</h2>
+            <h2 data-lang="hi">दस्तावेज़ / फोटो / वीडियो अपलोड करें</h2>
+            <h2 data-lang="kn">ದಾಖಲೆಗಳು / ಫೋಟೋಗಳು / ವೀಡಿಯೋಗಳನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ</h2>
+            <p data-lang="en">Drag & drop or click to browse. Any format accepted.</p>
+            <p data-lang="hi">खींचें और छोड़ें या ब्राउज़ करने के लिए क्लिक करें।</p>
+            <p data-lang="kn">ಎಳೆದು ಬಿಡಿ ಅಥವಾ ಬ್ರೌಸ್ ಮಾಡಲು ಕ್ಲಿಕ್ ಮಾಡಿ.</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="upload-zone" id="uploadZone"
+            ondragover="handleDragOver(event)"
+            ondragleave="handleDragLeave(event)"
+            ondrop="handleDrop(event)"
+            onclick="triggerFileInput()">
+            <input type="file" id="fileInput" multiple
+              accept="image/*,application/pdf,video/*,.doc,.docx"
+              onchange="handleFiles(this.files)" />
+            <div class="upload-icon" style="display:flex;justify-content:center;"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1a6cf2" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+            <div class="upload-title">
+              <span data-lang="en">Drop your files here or click to upload</span>
+              <span data-lang="hi">अपनी फाइलें यहाँ छोड़ें या अपलोड करने के लिए क्लिक करें</span>
+              <span data-lang="kn">ನಿಮ್ಮ ಫೈಲ್‌ಗಳನ್ನು ಇಲ್ಲಿ ಬಿಡಿ ಅಥವಾ ಅಪ್‌ಲೋಡ್ ಮಾಡಲು ಕ್ಲಿಕ್ ಮಾಡಿ</span>
+            </div>
+            <div class="upload-sub">
+              <span data-lang="en">Hospital bills, insurance letters, discharge summaries, photos of documents, or videos</span>
+              <span data-lang="hi">अस्पताल बिल, बीमा पत्र, डिस्चार्ज सारांश, दस्तावेज़ों की फोटो या वीडियो</span>
+              <span data-lang="kn">ಆಸ್ಪತ್ರೆ ಬಿಲ್, ವಿಮಾ ಪತ್ರಗಳು, ಡಿಸ್ಚಾರ್ಜ್ ಸಾರಾಂಶಗಳು, ಫೋಟೋಗಳು ಅಥವಾ ವೀಡಿಯೋಗಳು</span>
+            </div>
+            <div class="upload-formats">
+              <span class="format-pill">JPG/PNG</span>
+              <span class="format-pill">PDF</span>
+              <span class="format-pill">MP4/MOV</span>
+              <span class="format-pill">DOC/DOCX</span>
+              <span class="format-pill">HEIC</span>
+            </div>
+          </div>
+
+          <!-- File list -->
+          <div class="file-list" id="fileList"></div>
+
+          <!-- OR -->
+          <div class="or-divider">
+            <span data-lang="en">OR enter bill number manually</span>
+            <span data-lang="hi">या बिल नंबर मैन्युअल रूप से दर्ज करें</span>
+            <span data-lang="kn">ಅಥವಾ ಬಿಲ್ ಸಂಖ್ಯೆ ಹಸ್ತಚಾಲಿತವಾಗಿ ನಮೂದಿಸಿ</span>
+          </div>
+
+          <div class="input-group">
+            <input type="text" class="input-field" id="billNumberInput"
+              placeholder="e.g. INV-2026-0042"
+              style="font-family:monospace;" />
+            <input type="text" class="input-field" id="hospitalNameInput"
+              placeholder="Hospital name (optional)" />
+          </div>
+
+          <div style="margin-top:1.25rem; display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+            <button class="btn-secondary" onclick="window.location.href='index.html'">
+              <span data-lang-inline="en">← Back</span>
+              <span data-lang-inline="hi">← वापस</span>
+              <span data-lang-inline="kn">← ಹಿಂದೆ</span>
+            </button>
+            <button class="btn-primary" id="analyzeBtn" onclick="startAnalysis()">
+              <span data-lang-inline="en">Analyze with AI</span>
+              <span data-lang-inline="hi">AI से विश्लेषण करें</span>
+              <span data-lang-inline="kn">AI ನಿಂದ ವಿಶ್ಲೇಷಣೆ ಮಾಡಿ</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SCREEN 2: ANALYZING ═══ -->
+    <div class="screen" id="screen2">
+      <div class="card" style="flex:1;">
+        <div class="card-body analyzing-screen">
+          <div class="spinner"></div>
+          <div class="analyzing-title">
+            <span data-lang="en">Analyzing your document…</span>
+            <span data-lang="hi">आपके दस्तावेज़ का विश्लेषण हो रहा है…</span>
+            <span data-lang="kn">ನಿಮ್ಮ ದಾಖಲೆ ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ…</span>
+          </div>
+          <div class="analyzing-sub">
+            <span data-lang="en">Google Gemini AI is reading and understanding your bill</span>
+            <span data-lang="hi">Google Gemini AI आपका बिल पढ़ और समझ रहा है</span>
+            <span data-lang="kn">Google Gemini AI ನಿಮ್ಮ ಬಿಲ್ ಓದಿ ಅರ್ಥಮಾಡಿಕೊಳ್ಳುತ್ತಿದೆ</span>
+          </div>
+          <div class="analyzing-steps" id="analyzingSteps">
+            <div class="a-step current" id="astep1">
+              <div class="check">⟳</div>
+              <span data-lang="en">Reading document (OCR + Vision)</span>
+              <span data-lang="hi">दस्तावेज़ पढ़ना (OCR + Vision)</span>
+              <span data-lang="kn">ದಾಖಲೆ ಓದುತ್ತಿದೆ (OCR + Vision)</span>
+            </div>
+            <div class="a-step pending" id="astep2">
+              <div class="check"></div>
+              <span data-lang="en">Identifying hospital & bill number</span>
+              <span data-lang="hi">अस्पताल और बिल नंबर पहचानना</span>
+              <span data-lang="kn">ಆಸ್ಪತ್ರೆ ಮತ್ತು ಬಿಲ್ ಸಂಖ್ಯೆ ಗುರುತಿಸುತ್ತಿದೆ</span>
+            </div>
+            <div class="a-step pending" id="astep3">
+              <div class="check"></div>
+              <span data-lang="en">Extracting charges & insurance amounts</span>
+              <span data-lang="hi">शुल्क और बीमा राशि निकालना</span>
+              <span data-lang="kn">ಶುಲ್ಕ ಮತ್ತು ವಿಮಾ ಮೊತ್ತ ಹೊರತೆಗೆಯುತ್ತಿದೆ</span>
+            </div>
+            <div class="a-step pending" id="astep4">
+              <div class="check"></div>
+              <span data-lang="en">Generating plain-language explanation</span>
+              <span data-lang="hi">सरल भाषा में स्पष्टीकरण तैयार करना</span>
+              <span data-lang="kn">ಸರಳ ಭಾಷೆಯ ವಿವರಣೆ ರಚಿಸುತ್ತಿದೆ</span>
+            </div>
+            <div class="a-step pending" id="astep5">
+              <div class="check"></div>
+              <span data-lang="en">Checking financial aid eligibility</span>
+              <span data-lang="hi">वित्तीय सहायता पात्रता जांचना</span>
+              <span data-lang="kn">ಆರ್ಥಿಕ ಸಹಾಯ ಅರ್ಹತೆ ಪರಿಶೀಲಿಸುತ್ತಿದೆ</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SCREEN 3: RESULTS + CHAT ═══ -->
+    <div class="screen" id="screen3">
+      <div class="results-grid fade-up">
+        <!-- Left column: Summary -->
+        <div style="display:flex;flex-direction:column;gap:1.25rem;">
+
+          <!-- AI Summary -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon" style="background:linear-gradient(135deg,#e8f0fe,#f0fdf4);display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a6cf2" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+              <div>
+                <h2 data-lang="en">AI Bill Summary</h2>
+                <h2 data-lang="hi">AI बिल सारांश</h2>
+                <h2 data-lang="kn">AI ಬಿಲ್ ಸಾರಾಂಶ</h2>
+                <p>City General Hospital · Bill #INV-2026-0042</p>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="summary-banner">
+                <div style="flex:1;">
+                  <p data-lang="en">Your surgery at City General Hospital cost <strong>₹48,500</strong>. Your insurance (Star Health) approved <strong>₹38,000</strong> and has already paid <strong>₹32,000</strong> to the hospital. The remaining balance of <strong>₹16,500</strong> is what you need to pay. This is called your <em>co-pay and excess</em>.</p>
+                  <p data-lang="hi">City General Hospital में आपकी सर्जरी की लागत <strong>₹48,500</strong> थी। आपके बीमा (Star Health) ने <strong>₹38,000</strong> स्वीकृत किए और पहले ही <strong>₹32,000</strong> का भुगतान कर दिया। शेष <strong>₹16,500</strong> आपको देना है — इसे <em>को-पे और एक्सेस</em> कहते हैं।</p>
+                  <p data-lang="kn">City General Hospital ನಲ್ಲಿ ನಿಮ್ಮ ಶಸ್ತ್ರಚಿಕಿತ್ಸೆ <strong>₹48,500</strong> ತಗಲಿತು. ನಿಮ್ಮ ವಿಮೆ (Star Health) <strong>₹38,000</strong> ಅನ್ನು ಅನುಮೋದಿಸಿ <strong>₹32,000</strong> ಈಗಾಗಲೇ ಪಾವತಿಸಿದೆ. ಉಳಿದ <strong>₹16,500</strong> ನೀವು ಪಾವತಿಸಬೇಕು — ಇದನ್ನು <em>ಕೋ-ಪೇ ಮತ್ತು ಎಕ್ಸೆಸ್</em> ಎನ್ನಲಾಗುತ್ತದೆ.</p>
+                </div>
+              </div>
+
+              <div class="amount-grid">
+                <div class="amount-card">
+                  <div class="amount-label" data-lang="en">Hospital Total Charge</div>
+                  <div class="amount-label" data-lang="hi">अस्पताल कुल शुल्क</div>
+                  <div class="amount-label" data-lang="kn">ಆಸ್ಪತ್ರೆ ಒಟ್ಟು ಶುಲ್ಕ</div>
+                  <div class="amount-val blue">₹ 48,500</div>
+                </div>
+                <div class="amount-card highlight-green">
+                  <div class="amount-label" data-lang="en">Insurance Paid</div>
+                  <div class="amount-label" data-lang="hi">बीमा द्वारा भुगतान</div>
+                  <div class="amount-label" data-lang="kn">ವಿಮೆ ಪಾವತಿ</div>
+                  <div class="amount-val green">₹ 32,000</div>
+                </div>
+                <div class="amount-card">
+                  <div class="amount-label" data-lang="en">Insurance Approved</div>
+                  <div class="amount-label" data-lang="hi">बीमा स्वीकृत</div>
+                  <div class="amount-label" data-lang="kn">ವಿಮೆ ಅನುಮೋದಿಸಿದ</div>
+                  <div class="amount-val" style="color:var(--accent);">₹ 38,000</div>
+                </div>
+                <div class="amount-card highlight-red">
+                  <div class="amount-label" data-lang="en">You Owe</div>
+                  <div class="amount-label" data-lang="hi">आपको देना है</div>
+                  <div class="amount-label" data-lang="kn">ನೀವು ಪಾವತಿಸಬೇಕು</div>
+                  <div class="amount-val red">₹ 16,500</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Financial Aid -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon" style="background:#e6f7f2;display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0ea875" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+              <div>
+                <h2 data-lang="en">Financial Aid You May Qualify For</h2>
+                <h2 data-lang="hi">वित्तीय सहायता जिसके लिए आप पात्र हो सकते हैं</h2>
+                <h2 data-lang="kn">ನೀವು ಅರ್ಹರಾಗಬಹುದಾದ ಆರ್ಥಿಕ ಸಹಾಯ</h2>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="scheme-list">
+                <div class="scheme-item">
+                  <div class="scheme-icon" style="display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M10 6h4"/><path d="M10 10h4"/></svg></div>
+                  <div class="scheme-info">
+                    <div class="scheme-name">Ayushman Bharat – PM-JAY</div>
+                    <div class="scheme-desc" data-lang="en">Up to ₹5 lakh/year coverage for eligible families</div>
+                    <div class="scheme-desc" data-lang="hi">पात्र परिवारों के लिए ₹5 लाख/वर्ष कवरेज</div>
+                    <div class="scheme-desc" data-lang="kn">ಅರ್ಹ ಕುಟುಂಬಗಳಿಗೆ ₹5 ಲಕ್ಷ/ವರ್ಷ ಕವರೇಜ್</div>
+                  </div>
+                  <span class="scheme-badge eligible" data-lang="en">Eligible</span>
+                  <span class="scheme-badge eligible" data-lang="hi">पात्र</span>
+                  <span class="scheme-badge eligible" data-lang="kn">ಅರ್ಹ</span>
+                </div>
+                <div class="scheme-item">
+                  <div class="scheme-icon" style="display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="22" x2="22" y2="22"/><line x1="4" y1="18" x2="20" y2="18"/><polygon points="12 2 2 7 22 7"/></svg></div>
+                  <div class="scheme-info">
+                    <div class="scheme-name" data-lang="en">Karnataka Arogya Karnataka</div>
+                    <div class="scheme-name" data-lang="hi">Karnataka Arogya Karnataka</div>
+                    <div class="scheme-name" data-lang="kn">ಕರ್ನಾಟಕ ಆರೋಗ್ಯ ಕರ್ನಾಟಕ</div>
+                    <div class="scheme-desc" data-lang="en">State health cover for BPL & non-BPL families</div>
+                    <div class="scheme-desc" data-lang="hi">BPL और गैर-BPL परिवारों के लिए राज्य स्वास्थ्य कवर</div>
+                    <div class="scheme-desc" data-lang="kn">BPL ಮತ್ತು ಇತರ ಕುಟುಂಬಗಳಿಗೆ ರಾಜ್ಯ ಆರೋಗ್ಯ ಕವರ್</div>
+                  </div>
+                  <span class="scheme-badge check" data-lang="en">Check</span>
+                  <span class="scheme-badge check" data-lang="hi">जांचें</span>
+                  <span class="scheme-badge check" data-lang="kn">ಪರಿಶೀಲಿಸಿ</span>
+                </div>
+                <div class="scheme-item">
+                  <div class="scheme-icon" style="display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                  <div class="scheme-info">
+                    <div class="scheme-name" data-lang="en">Hospital Hardship Fund</div>
+                    <div class="scheme-name" data-lang="hi">अस्पताल कठिनाई निधि</div>
+                    <div class="scheme-name" data-lang="kn">ಆಸ್ಪತ್ರೆ ಕಷ್ಟ ನಿಧಿ</div>
+                    <div class="scheme-desc" data-lang="en">Up to 50% waiver for patients who cannot pay</div>
+                    <div class="scheme-desc" data-lang="hi">भुगतान में असमर्थ मरीजों के लिए 50% तक छूट</div>
+                    <div class="scheme-desc" data-lang="kn">ಪಾವತಿಸಲಾಗದ ರೋಗಿಗಳಿಗೆ 50% ವರೆಗೆ ವಿನಾಯಿತಿ</div>
+                  </div>
+                  <span class="scheme-badge check" data-lang="en">Ask Hospital</span>
+                  <span class="scheme-badge check" data-lang="hi">अस्पताल से पूछें</span>
+                  <span class="scheme-badge check" data-lang="kn">ಆಸ್ಪತ್ರೆಯನ್ನು ಕೇಳಿ</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Plans -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon" style="background:#fef3c7;display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
+              <div>
+                <h2 data-lang="en">Payment Plan Options</h2>
+                <h2 data-lang="hi">भुगतान योजना विकल्प</h2>
+                <h2 data-lang="kn">ಪಾವತಿ ಯೋಜನೆ ಆಯ್ಕೆಗಳು</h2>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="plan-list">
+                <div class="plan-item selected" onclick="selectPlan(this)">
+                  <div class="plan-header">
+                    <span class="plan-name" data-lang="en">Pay in Full Now</span>
+                    <span class="plan-name" data-lang="hi">अभी पूरी राशि दें</span>
+                    <span class="plan-name" data-lang="kn">ಈಗಲೇ ಸಂಪೂರ್ಣ ಪಾವತಿ</span>
+                    <span class="plan-amount">₹16,500</span>
+                  </div>
+                  <div class="plan-desc" data-lang="en">One-time payment · 5% early payment discount available</div>
+                  <div class="plan-desc" data-lang="hi">एकमुश्त भुगतान · 5% अर्ली पेमेंट छूट उपलब्ध</div>
+                  <div class="plan-desc" data-lang="kn">ಏಕ ಪಾವತಿ · 5% ಆರಂಭಿಕ ಪಾವತಿ ರಿಯಾಯಿತಿ ಲಭ್ಯ</div>
+                </div>
+                <div class="plan-item" onclick="selectPlan(this)">
+                  <div class="plan-header">
+                    <span class="plan-name" data-lang="en">3 Monthly Installments</span>
+                    <span class="plan-name" data-lang="hi">3 मासिक किश्तें</span>
+                    <span class="plan-name" data-lang="kn">3 ಮಾಸಿಕ ಕಂತುಗಳು</span>
+                    <span class="plan-amount">₹5,500/mo</span>
+                  </div>
+                  <div class="plan-desc" data-lang="en">₹5,500 × 3 months · Zero interest · No documentation needed</div>
+                  <div class="plan-desc" data-lang="hi">₹5,500 × 3 महीने · शून्य ब्याज · कोई दस्तावेज़ नहीं</div>
+                  <div class="plan-desc" data-lang="kn">₹5,500 × 3 ತಿಂಗಳು · ಶೂನ್ಯ ಬಡ್ಡಿ · ಯಾವುದೇ ದಾಖಲೆ ಬೇಡ</div>
+                </div>
+                <div class="plan-item" onclick="selectPlan(this)">
+                  <div class="plan-header">
+                    <span class="plan-name" data-lang="en">6 Monthly Installments</span>
+                    <span class="plan-name" data-lang="hi">6 मासिक किश्तें</span>
+                    <span class="plan-name" data-lang="kn">6 ಮಾಸಿಕ ಕಂತುಗಳು</span>
+                    <span class="plan-amount">₹2,750/mo</span>
+                  </div>
+                  <div class="plan-desc" data-lang="en">₹2,750 × 6 months · Minimal processing fee · Flexible dates</div>
+                  <div class="plan-desc" data-lang="hi">₹2,750 × 6 महीने · न्यूनतम प्रोसेसिंग शुल्क</div>
+                  <div class="plan-desc" data-lang="kn">₹2,750 × 6 ತಿಂಗಳು · ಕನಿಷ್ಠ ಪ್ರಕ್ರಿಯೆ ಶುಲ್ಕ</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Consent -->
+          <div class="consent-card">
+            <div class="icon" style="display:flex;align-items:center;justify-content:center;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0ea875" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <div style="flex:1;">
+              <h3 data-lang="en">Would you like help from a counselor?</h3>
+              <h3 data-lang="hi">क्या आप किसी परामर्शदाता की मदद चाहते हैं?</h3>
+              <h3 data-lang="kn">ಸಲಹೆಗಾರರ ಸಹಾಯ ಬೇಕೇ?</h3>
+              <p data-lang="en">With your consent, we can connect you to a community health worker or hospital billing counselor for free, hands-on assistance.</p>
+              <p data-lang="hi">आपकी सहमति से, हम आपको मुफ्त, व्यावहारिक सहायता के लिए एक सामुदायिक स्वास्थ्य कार्यकर्ता या अस्पताल बिलिंग परामर्शदाता से जोड़ सकते हैं।</p>
+              <p data-lang="kn">ನಿಮ್ಮ ಒಪ್ಪಿಗೆಯೊಂದಿಗೆ, ಉಚಿತ ಸಹಾಯಕ್ಕಾಗಿ ಸಮುದಾಯ ಆರೋಗ್ಯ ಕಾರ್ಯಕರ್ತರೊಂದಿಗೆ ನಿಮ್ಮನ್ನು ಸಂಪರ್ಕಿಸಬಹುದು.</p>
+              <div class="consent-actions">
+                <button class="btn-sm primary" onclick="showToast('success', 'Counselor request sent! You will be contacted within 2 hours.')">
+                  <span data-lang-inline="en">Yes, connect me</span>
+                  <span data-lang-inline="hi">हाँ, जोड़ें</span>
+                  <span data-lang-inline="kn">ಹೌದು, ಸಂಪರ್ಕಿಸಿ</span>
+                </button>
+                <button class="btn-sm">
+                  <span data-lang-inline="en">No thanks</span>
+                  <span data-lang-inline="hi">नहीं, धन्यवाद</span>
+                  <span data-lang-inline="kn">ಬೇಡ, ಧನ್ಯವಾದ</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right column: Chat -->
+        <div style="display:flex;flex-direction:column;gap:1.25rem;">
+          <div class="card" style="position:sticky;top:80px;">
+            <div class="chat-header">
+              <div class="chat-avatar" style="display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></div>
+              <div style="flex:1;">
+                <div class="chat-name" data-lang="en">BillSaathi AI Assistant</div>
+                <div class="chat-name" data-lang="hi">BillSaathi AI सहायक</div>
+                <div class="chat-name" data-lang="kn">BillSaathi AI ಸಹಾಯಕ</div>
+                <div class="chat-status">
+                  <span data-lang="en">Online — Powered by Gemini</span>
+                  <span data-lang="hi">ऑनलाइन — Gemini द्वारा</span>
+                  <span data-lang="kn">ಆನ್‌ಲೈನ್ — Gemini ಚಾಲಿತ</span>
+                </div>
+              </div>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a6cf2" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M3 12h18"/></svg>
+            </div>
+
+            <div class="chat-panel" style="height:420px;border:none;border-radius:0;">
+              <div class="chat-messages" id="chatMessages">
+                <!-- Initial bot message -->
+                <div class="msg bot">
+                  <div class="msg-avatar" style="display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></div>
+                  <div>
+                    <div class="msg-bubble" id="initMsg">
+                      <span data-lang="en">Hello! I've finished analyzing your hospital bill from <strong>City General Hospital</strong>. You owe <strong>₹16,500</strong> after insurance. I'm here to help explain anything — just ask me!</span>
+                      <span data-lang="hi">नमस्ते! मैंने <strong>City General Hospital</strong> के आपके अस्पताल बिल का विश्लेषण पूरा कर लिया है। बीमा के बाद आपको <strong>₹16,500</strong> देना है। कोई भी प्रश्न पूछें!</span>
+                      <span data-lang="kn">ನಮಸ್ಕಾರ! ನಾನು <strong>City General Hospital</strong> ನ ನಿಮ್ಮ ಆಸ್ಪತ್ರೆ ಬಿಲ್ ವಿಶ್ಲೇಷಿಸಿದ್ದೇನೆ. ವಿಮೆ ನಂತರ ನೀವು <strong>₹16,500</strong> ಪಾವತಿಸಬೇಕು. ಏನಾದರೂ ಕೇಳಿ!</span>
+                    </div>
+                    <div class="msg-time">Just now</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick replies -->
+              <div class="chat-quick-replies" id="quickReplies">
+                <button class="quick-reply" onclick="sendQuickReply(this)">
+                  <span data-lang-inline="en">Why do I owe ₹16,500?</span>
+                  <span data-lang-inline="hi">मुझे ₹16,500 क्यों देना है?</span>
+                  <span data-lang-inline="kn">ನಾನು ₹16,500 ಯಾಕೆ ಪಾವತಿಸಬೇಕು?</span>
+                </button>
+                <button class="quick-reply" onclick="sendQuickReply(this)">
+                  <span data-lang-inline="en">Do I qualify for Ayushman?</span>
+                  <span data-lang-inline="hi">क्या मैं आयुष्मान के लिए पात्र हूँ?</span>
+                  <span data-lang-inline="kn">ನಾನು ಆಯುಷ್ಮಾನ್‌ಗೆ ಅರ್ಹನೇ?</span>
+                </button>
+                <button class="quick-reply" onclick="sendQuickReply(this)">
+                  <span data-lang-inline="en">Can I pay in installments?</span>
+                  <span data-lang-inline="hi">क्या मैं किश्तों में दे सकता हूँ?</span>
+                  <span data-lang-inline="kn">ಕಂತುಗಳಲ್ಲಿ ಪಾವತಿಸಬಹುದೇ?</span>
+                </button>
+              </div>
+
+              <div class="chat-input-area">
+                <textarea class="chat-input" id="chatInput"
+                  placeholder="Ask about your bill…"
+                  rows="1"
+                  onkeydown="handleChatKey(event)"
+                  oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+                <button class="chat-send" onclick="sendMessage()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Download / New Analysis -->
+          <div style="display:flex;gap:10px;">
+            <button class="btn-secondary" style="flex:1;" onclick="window.print()">
+              <span data-lang-inline="en">Download Report</span>
+              <span data-lang-inline="hi">रिपोर्ट डाउनलोड</span>
+              <span data-lang-inline="kn">ವರದಿ ಡೌನ್‌ಲೋಡ್</span>
+            </button>
+            <button class="btn-primary" style="flex:1;" onclick="startNew()">
+              <span data-lang-inline="en">+ New Bill</span>
+              <span data-lang-inline="hi">+ नया बिल</span>
+              <span data-lang-inline="kn">+ ಹೊಸ ಬಿಲ್</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ── Language ──
+  function setLang(lang, btn) {
+    document.body.className = 'lang-' + lang;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    localStorage.setItem('pfn-lang', lang);
+    updateChatPlaceholder(lang);
+  }
+  function updateChatPlaceholder(lang) {
+    const input = document.getElementById('chatInput');
+    if (!input) return;
+    const ph = { en:'Ask about your bill…', hi:'अपने बिल के बारे में पूछें…', kn:'ನಿಮ್ಮ ಬಿಲ್ ಬಗ್ಗೆ ಕೇಳಿ…' };
+    input.placeholder = ph[lang] || ph.en;
+  }
+  const savedLang = localStorage.getItem('pfn-lang') || 'en';
+  document.body.className = 'lang-' + savedLang;
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    const map = { en:'EN', hi:'हि', kn:'ಕ' };
+    if (btn.textContent.trim() === map[savedLang]) btn.classList.add('active');
+    else btn.classList.remove('active');
+  });
+
+  // ── File Upload ──
+  let uploadedFiles = [];
+  function triggerFileInput() { document.getElementById('fileInput').click(); }
+  function handleDragOver(e) {
+    e.preventDefault();
+    document.getElementById('uploadZone').classList.add('dragover');
+  }
+  function handleDragLeave(e) { document.getElementById('uploadZone').classList.remove('dragover'); }
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('uploadZone').classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+  }
+  function handleFiles(files) {
+    Array.from(files).forEach(f => { uploadedFiles.push(f); });
+    renderFileList();
+    if (uploadedFiles.length > 0) showToast('success', `${uploadedFiles.length} file(s) ready to analyze.`);
+  }
+  function renderFileList() {
+    const list = document.getElementById('fileList');
+    list.innerHTML = '';
+    uploadedFiles.forEach((f, i) => {
+      const icon = f.type.startsWith('image') ? 'IMG' : f.type.startsWith('video') ? 'VID' : f.type.includes('pdf') ? 'PDF' : 'DOC';
+      const size = f.size > 1024*1024 ? (f.size/(1024*1024)).toFixed(1)+' MB' : (f.size/1024).toFixed(0)+' KB';
+      const div = document.createElement('div');
+      div.className = 'file-item';
+      div.innerHTML = `
+        <div class="file-thumb">${icon}</div>
+        <div class="file-info">
+          <div class="file-name">${f.name}</div>
+          <div class="file-size">${size}</div>
+        </div>
+        <button class="file-remove" onclick="removeFile(${i})" title="Remove">&times;</button>`;
+      list.appendChild(div);
+    });
+  }
+  function removeFile(i) {
+    uploadedFiles.splice(i, 1);
+    renderFileList();
+  }
+
+  // ── Analysis Flow ──
+  function startAnalysis() {
+    const billNum = document.getElementById('billNumberInput').value.trim();
+    if (uploadedFiles.length === 0 && !billNum) {
+      showToast('error', 'Please upload a document or enter a bill number.');
+      return;
+    }
+    goToScreen(2);
+    runAnalysisSteps();
+  }
+
+  const stepDelays = [1200, 900, 1400, 1100, 900];
+  function runAnalysisSteps() {
+    let done = 0;
+    function next() {
+      if (done > 0) {
+        const prev = document.getElementById('astep' + done);
+        if (prev) { prev.className = 'a-step done'; prev.querySelector('.check').textContent = 'OK'; }
+      }
+      done++;
+      if (done <= 5) {
+        const cur = document.getElementById('astep' + done);
+        if (cur) { cur.className = 'a-step current'; cur.querySelector('.check').textContent = '⟳'; }
+        setTimeout(next, stepDelays[done-1] || 1000);
+      } else {
+        setTimeout(() => goToScreen(3), 500);
+      }
+    }
+    next();
+  }
+
+  // ── Wizard Navigation ──
+  function goToScreen(n) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen'+n).classList.add('active');
+    document.querySelectorAll('.wstep').forEach((ws, i) => {
+      ws.classList.remove('active','done');
+      if (i+1 < n) ws.classList.add('done');
+      else if (i+1 === n) ws.classList.add('active');
+    });
+    ['line1','line2'].forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) { if (i+2 <= n) el.classList.add('done'); else el.classList.remove('done'); }
+    });
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  function startNew() { goToScreen(1); uploadedFiles=[]; renderFileList(); document.getElementById('billNumberInput').value=''; }
+  function selectPlan(el) { document.querySelectorAll('.plan-item').forEach(p=>p.classList.remove('selected')); el.classList.add('selected'); }
+
+  // ── Chat ──
+  const botResponses = {
+    en: [
+      "Great question! Your hospital charged ₹48,500 for the surgery. Your insurance approved ₹38,000 of that and already sent ₹32,000 to the hospital. The ₹6,000 difference (approved but not yet paid) plus the ₹10,500 not approved = ₹16,500 that you must pay.",
+      "Based on your income details, you appear to qualify for the Ayushman Bharat PM-JAY scheme! This could cover up to ₹5 lakh per year. I recommend visiting the hospital's Ayushman help desk with your Aadhaar card to verify.",
+      "Yes! The hospital offers a zero-interest 3-month or 6-month plan. For ₹16,500 that's ₹5,500/month for 3 months or ₹2,750/month for 6 months. You can request this at the billing counter with just your ID proof.",
+      "I understand this is stressful. Let me help you step by step. First, let's confirm your insurance has completed their payment. Would you like me to explain the next steps?"
+    ],
+    hi: [
+      "बहुत अच्छा सवाल! आपके अस्पताल ने सर्जरी के लिए ₹48,500 चार्ज किया। आपके बीमा ने ₹38,000 स्वीकृत किए और ₹32,000 पहले ही भेज दिए। ₹6,000 का अंतर (स्वीकृत लेकिन भुगतान नहीं) और ₹10,500 जो स्वीकृत नहीं हुआ = ₹16,500 आपको देना है।",
+      "आपकी आय के आधार पर, आप आयुष्मान भारत PM-JAY योजना के लिए पात्र लग रहे हैं! यह प्रति वर्ष ₹5 लाख तक कवर कर सकता है। आधार कार्ड के साथ अस्पताल के आयुष्मान हेल्प डेस्क पर जाएं।",
+      "हाँ! अस्पताल 3 या 6 महीने की शून्य-ब्याज किश्त योजना प्रदान करता है। ₹16,500 के लिए यह ₹5,500/माह (3 महीने) या ₹2,750/माह (6 महीने) होगा।",
+      "मैं समझता हूँ यह तनावपूर्ण है। मुझे चरण दर चरण मदद करने दें।"
+    ],
+    kn: [
+      "ತುಂಬಾ ಒಳ್ಳೆಯ ಪ್ರಶ್ನೆ! ನಿಮ್ಮ ಆಸ್ಪತ್ರೆ ಶಸ್ತ್ರಚಿಕಿತ್ಸೆಗೆ ₹48,500 ವಿಧಿಸಿದೆ. ನಿಮ್ಮ ವಿಮೆ ₹38,000 ಅನ್ನು ಅನುಮೋದಿಸಿ ₹32,000 ಕಳಿಸಿದೆ. ₹6,000 ವ್ಯತ್ಯಾಸ + ₹10,500 ಅನುಮೋದಿಸದ = ₹16,500 ನೀವು ಪಾವತಿಸಬೇಕು.",
+      "ನಿಮ್ಮ ಆದಾಯದ ಆಧಾರದ ಮೇಲೆ, ನೀವು ಆಯುಷ್ಮಾನ್ ಭಾರತ PM-JAY ಯೋಜನೆಗೆ ಅರ್ಹರಾಗಿ ಕಾಣಿಸುತ್ತದೆ! ಇದು ವರ್ಷಕ್ಕೆ ₹5 ಲಕ್ಷದವರೆಗೆ ಒಳಗೊಳ್ಳಬಹುದು.",
+      "ಹೌದು! ಆಸ್ಪತ್ರೆ 3 ಅಥವಾ 6 ತಿಂಗಳ ಶೂನ್ಯ-ಬಡ್ಡಿ ಕಂತು ಯೋಜನೆ ನೀಡುತ್ತದೆ. ₹16,500ಗೆ ₹5,500/ತಿಂಗಳು ಅಥವಾ ₹2,750/ತಿಂಗಳು.",
+      "ನಾನು ಅರ್ಥಮಾಡಿಕೊಳ್ಳುತ್ತೇನೆ. ಹಂತ ಹಂತವಾಗಿ ಸಹಾಯ ಮಾಡಲು ಬಿಡಿ."
+    ]
+  };
+  let responseIdx = 0;
+  function getCurrentLang() { return (document.body.className.match(/lang-(\w+)/) || ['','en'])[1]; }
+  function sendQuickReply(btn) {
+    const lang = getCurrentLang();
+    const text = btn.querySelector(`[data-lang-inline="${lang}"]`)?.textContent || btn.textContent;
+    document.getElementById('quickReplies').innerHTML = '';
+    appendUserMsg(text);
+    showTyping();
+    setTimeout(() => { hideTyping(); appendBotMsg(botResponses[lang][responseIdx % botResponses[lang].length]); responseIdx++; }, 1600);
+  }
+  function handleChatKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+  function sendMessage() {
+    const lang = getCurrentLang();
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = ''; input.style.height = 'auto';
+    document.getElementById('quickReplies').innerHTML = '';
+    appendUserMsg(text);
+    showTyping();
+    setTimeout(() => { hideTyping(); appendBotMsg(botResponses[lang][responseIdx % botResponses[lang].length]); responseIdx++; }, 1600 + Math.random()*800);
+  }
+  function appendUserMsg(text) {
+    const msgs = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'msg user fade-up';
+    div.innerHTML = `<div><div class="msg-bubble">${escapeHtml(text)}</div><div class="msg-time" style="text-align:right;">You · Now</div></div>`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+  function appendBotMsg(text) {
+    const msgs = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'msg bot fade-up';
+    div.innerHTML = `<div class="msg-avatar" style="display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></div><div><div class="msg-bubble">${text}</div><div class="msg-time">BillSaathi · Now</div></div>`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+  let typingEl = null;
+  function showTyping() {
+    const msgs = document.getElementById('chatMessages');
+    typingEl = document.createElement('div');
+    typingEl.className = 'msg bot';
+    typingEl.id = 'typingIndicator';
+    typingEl.innerHTML = `<div class="msg-avatar" style="display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></div><div class="msg-bubble" style="padding:8px 14px;"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+    msgs.appendChild(typingEl);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+  function hideTyping() { const t = document.getElementById('typingIndicator'); if (t) t.remove(); }
+  function escapeHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // ── Toast ──
+  function showToast(type, msg) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity 0.4s'; setTimeout(()=>toast.remove(),400); }, 3500);
+  }
+</script>
+</body>
+</html>
+
+
