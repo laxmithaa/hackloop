@@ -1,3 +1,12 @@
+node_modules/
+.next/
+coverage/
+*.tsbuildinfo
+.env*
+!.env.example
+
+.next-dev.log
+.next-dev.pid
 # --- Secrets and environment ---
 .env
 .env.*
