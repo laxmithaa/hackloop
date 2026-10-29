@@ -29,7 +29,10 @@ coverage.xml
 # --- Runtime data (uploads, logs) reserved for later phases ---
 *.log
 logs/
-data/
+data/*
+!data/fictional/
+data/fictional/*
+!data/fictional/seed.sql
 uploads/
 var/
 

@@ -115,6 +115,9 @@ class Settings(BaseSettings):
     app_name: str = "Healthcare Bill Navigator API"
     app_version: str = "0.1.0"
     environment: Environment = "local"
+
+    #: Optional PostgreSQL URL. Empty keeps the prototype's in-memory mode.
+    database_url: str = Field(default="", validation_alias="DATABASE_URL")
     api_v1_prefix: str = "/api/v1"
 
     cors_origins: str = "http://localhost:3000,http://localhost:5173"
@@ -124,7 +127,7 @@ class Settings(BaseSettings):
     request_id_header: str = "X-Request-ID"
 
     # --- Phase 2: sessions, consent, uploads and OCR ---
-    # Everything below stays in process memory; nothing is written to disk.
+    # Sessions remain process-local until the API workflow is migrated to DB storage.
 
     #: How long an in-memory patient session stays valid after creation.
     session_ttl_minutes: int = Field(default=60, ge=1, le=1440)
