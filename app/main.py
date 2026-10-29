@@ -164,6 +164,14 @@ def create_application(settings: Settings | None = None) -> FastAPI:
     app_settings = settings or get_settings()
     configure_logging(app_settings.log_level, force=True)
 
+    # Async psycopg cannot connect on Windows' default ProactorEventLoop, and
+    # the loop must be chosen before uvicorn creates it. Only DB-enabled runs
+    # are affected; the in-memory default keeps its original behaviour.
+    if app_settings.database_url:
+        from app.db.pool import ensure_windows_async_compat
+
+        ensure_windows_async_compat()
+
     @asynccontextmanager
     async def lifespan(application: FastAPI) -> AsyncIterator[None]:
         logger.info(
@@ -172,8 +180,26 @@ def create_application(settings: Settings | None = None) -> FastAPI:
             app_settings.app_version,
             app_settings.environment,
         )
-        yield
-        logger.info("shutting down %s", app_settings.app_name)
+        # PostgreSQL is opt-in: without DATABASE_URL the prototype keeps its
+        # original in-memory behaviour and does not even import psycopg.
+        if app_settings.database_url:
+            from app.db.pool import create_pool
+
+            pool = create_pool(app_settings.database_url)
+            await pool.open(wait=True)
+            application.state.db_pool = pool
+            logger.info("database connection pool opened")
+        else:
+            application.state.db_pool = None
+            logger.info("DATABASE_URL is not set; running with in-memory state")
+        try:
+            yield
+        finally:
+            pool = getattr(application.state, "db_pool", None)
+            if pool is not None:
+                await pool.close()
+                application.state.db_pool = None
+            logger.info("shutting down %s", app_settings.app_name)
 
     application = FastAPI(
         title=app_settings.app_name,
