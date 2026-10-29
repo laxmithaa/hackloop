@@ -36,6 +36,13 @@ data/fictional/*
 uploads/
 var/
 
+# --- Frontend (Next.js) ---
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env.local
+frontend/*.tsbuildinfo
+
 # --- OS / editor ---
 .DS_Store
 Thumbs.db

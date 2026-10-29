@@ -18,6 +18,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.compat.bills import router as demo_compat_router
 from app.api.error_handlers import register_exception_handlers
 from app.api.routes.health import router as health_router
 from app.api.v1.router import api_v1_router
@@ -276,6 +277,8 @@ def create_application(settings: Settings | None = None) -> FastAPI:
 
     application.include_router(health_router)
     application.include_router(api_v1_router, prefix=app_settings.api_v1_prefix)
+    # Demo-only bridge for the Next.js frontend under frontend/ (see docs/FRONTEND.md).
+    application.include_router(demo_compat_router)
 
     return application
 
