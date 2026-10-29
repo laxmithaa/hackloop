@@ -5,3 +5,16 @@
 @media(max-width:600px){.container,.header-inner,.footer-inner,.page{width:calc(100% - 32px)}.brand-name{font-size:15px}.brand-name small{font-size:10px}.brand-icon{width:38px;height:38px}.language{padding:2px 7px}.nav{font-size:13px;gap:18px}.hero h1{font-size:40px}.hero-intro{font-size:16px}.hero-actions{align-items:flex-start;flex-direction:column;gap:20px}.hero-actions .button{width:100%}.hero-art{height:310px}.circle-one{width:260px;height:260px}.circle-two{width:190px;height:190px}.floating-icon{right:5%}.art-caption{font-size:8px}.notice-strip .container{align-items:flex-start}.steps{grid-template-columns:1fr}.step-card{padding:22px}.help-banner{padding:22px}.help-banner .button{width:100%}.help-icon{padding:10px}.footer-links{margin-left:0}.page{padding-top:30px}.panel{padding:20px}.identify-grid{grid-template-columns:1fr;gap:0}.or-divider{padding-top:18px}.amount-grid{grid-template-columns:1fr}.amount strong{font-size:24px}.actions .button{width:100%}.bill-header{align-items:flex-start}.support-link a{margin-left:0;width:100%}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 .progress{padding:18px 0;border-bottom:1px solid var(--line);font-size:14px}.progress ol{display:flex;flex-wrap:wrap;gap:10px 20px;list-style:none;padding:0;margin:0 0 8px}.progress li[aria-current=step]{font-weight:700;color:var(--dark)}.progress li span{color:#657d77}.progress a{text-decoration:underline}.progress>a{color:var(--dark)}summary{cursor:pointer;font-weight:700;min-height:44px;padding:10px 0}summary:focus-visible{outline:3px solid #d4923f;outline-offset:3px}.privacy{display:block}.privacy summary svg{display:inline;vertical-align:middle}.glossary,.caregiver details{border-top:1px solid var(--line);margin-top:16px}.glossary details{padding-left:16px}.button[aria-pressed=true]{background:#dcefe9;border-color:#16766d}.button:active{transform:translateY(1px)}.dashboard-grid .button{margin-top:16px}
+
+/* Connected-service states: explicit success / warning / error panels. */
+.status-error{background:#fdf1ef;border-color:#efcfc8;color:#8d2f26}
+.status-warning{background:#fdf7e9;border-color:#edddbb;color:#715a30}
+.status-box h2{font-size:19px;font-weight:700;margin:0 0 6px}
+.status-box .actions{margin-top:14px}
+.status-box p{margin:6px 0}
+.status-box .hint{color:#6a7f79}
+.status-error .hint{color:#8b615c}
+.status-box ul{margin:8px 0;padding-left:20px}
+.status-box li{margin:3px 0}
+.warning span{display:inline}
+@media(max-width:600px){.status-box{padding:18px}}
